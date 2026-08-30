@@ -41,5 +41,20 @@ const items = [
   .nav a:hover { color: var(--ink); }
   .nav a.is-current { color: var(--ink); border-bottom-color: var(--accent); }
 
-  @media (max-width: 860px) { .nav { display: none; } }
+  /* Below the desktop breakpoint the nav drops to its own full-width row and
+     scrolls sideways. No hamburger, no overlay, no JavaScript — the shortcuts
+     stay reachable on a phone, which is where they were missing entirely. */
+  @media (max-width: 860px) {
+    .nav {
+      order: 2;
+      width: 100%;
+      overflow-x: auto;
+      overscroll-behavior-x: contain;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+    .nav::-webkit-scrollbar { display: none; }
+    .nav ul { gap: var(--s-4); padding-bottom: 2px; }
+    .nav a { white-space: nowrap; }
+  }
 </style>

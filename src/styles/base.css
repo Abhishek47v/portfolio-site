@@ -11,7 +11,8 @@ html {
 
 /* The header is sticky, so an anchor target would otherwise land underneath
    it. Every jump clears the bar by its height plus a little air. */
-[id] { scroll-margin-top: calc(60px + var(--s-4)); }
+[id] { scroll-margin-top: calc(var(--bar-h) + var(--s-4)); }
+@media (max-width: 860px) { :root { --bar-h: 98px; } }
 
 body {
   min-height: 100svh;
@@ -90,6 +91,10 @@ button {
   backdrop-filter: blur(14px) saturate(112%);
   -webkit-backdrop-filter: blur(14px) saturate(112%);
 }
+
+/* The footer continues the same sheet, so it must not draw its own top edge —
+   two adjacent borders read as a seam across the page. */
+.sheet--foot { border-top: 0; border-radius: 0; }
 
 /* A section within the sheet. The rhythm is deliberately uneven — each
    section sets its own vertical measure via --band. */

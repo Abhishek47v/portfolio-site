@@ -51,6 +51,7 @@
   --s-5:1.5rem; --s-6:2.25rem; --s-7:3.5rem; --s-8:5.5rem;
   --gutter:clamp(1.25rem, 4vw, 2rem);
   --wrap:64rem;
+  --bar-h:60px;          /* header height; anchors clear it */
   --radius:4px;
 
   /* ---- motion ---- */
