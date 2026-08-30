@@ -1,0 +1,68 @@
+---
+/**
+ * The first screen's call to action, below the numbers.
+ *
+ * Its own component because it has to sit *after* the stats strip in the
+ * document, and the strip is a sibling of the hero rather than part of it. The
+ * order is the argument: introduction, then evidence, then the invitation —
+ * asking someone to look at the work before showing them any reason to is the
+ * wrong way round.
+ */
+import { site } from '../data/site';
+import { hasPublicFile } from '../lib/assets';
+
+const hasResume = hasPublicFile(site.links.resume);
+---
+
+<p class="actions">
+  <a class="action action--primary" href="#work">See my works</a>
+  {hasResume && <a class="action" href={site.links.resume}>Résumé</a>}
+</p>
+
+<style>
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--s-3);
+    margin: 0;
+    /* base.css caps every p and li at --measure (64ch) because they are
+       normally prose. This one is a control, not a sentence: left capped it
+       sat in a 646px box pinned to the left gutter, so `justify-content:
+       center` was centring it inside that box rather than on the page. */
+    max-width: none;
+    width: 100%;
+    /* This is the last element on the first screen, so its bottom padding
+       is the difference between the button clearing the fold and hanging off
+       it. Trimmed to what the fold budget actually allows. */
+    padding-bottom: clamp(.7rem, 2.3vh, 1.6rem);
+  }
+  .action {
+    font-family: var(--font-mono);
+    font-size: .72rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    padding: 11px 20px;
+    border: 1px solid var(--edge);
+    border-radius: 999px;
+    text-decoration: none;
+    background: var(--surface);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: border-color var(--dur-fast) var(--ease);
+  }
+  .action:hover { border-color: var(--accent); }
+
+  /* Solid, not a tinted veil. --accent-soft is 13% alpha by day, so the button
+     was a faint outline over whatever sky or ridge happened to be behind it —
+     and being the last element on the first screen, it usually sat over the
+     hills. A solid fill is legible against all of them, and it is the only
+     element on the page asking to be clicked, so it should look like it. */
+  .action--primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--on-accent);
+    font-weight: 500;
+  }
+  .action--primary:hover { background: var(--ink); border-color: var(--ink); }
+</style>

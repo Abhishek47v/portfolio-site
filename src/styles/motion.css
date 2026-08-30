@@ -1,9 +1,16 @@
 /* motion.css — every keyframe, and one place where motion reduces.
    Reduced motion is a designed variant, not a kill switch (D-022). */
 
+/* Percentages in `translate` resolve against the *element's own* box, not the
+   viewport — so -8% to 108% moved each cloud about 300px and then snapped it
+   back while it was still on screen. Viewport units make the travel a real
+   crossing, which puts the reset off-screen where it belongs, and the fade at
+   both ends means an interrupted cycle never pops. */
 @keyframes drift {
-  from { transform: translate3d(-8%, 0, 0); }
-  to   { transform: translate3d(108%, 0, 0); }
+  from { transform: translate3d(-32vw, 0, 0); opacity: 0; }
+  7%   { opacity: 1; }
+  93%  { opacity: 1; }
+  to   { transform: translate3d(118vw, 0, 0); opacity: 0; }
 }
 
 @keyframes twinkle {
@@ -30,9 +37,9 @@
 
    Only the terrain is listed here. The sky holds still by design (D-027): it
    is what the hills move against, and without it the whole page just slides. */
-@keyframes pan-far  { to { transform: translateX(-70px); } }
-@keyframes pan-mid  { to { transform: translateX(-160px); } }
-@keyframes pan-near { to { transform: translateX(-300px); } }
+@keyframes pan-far  { to { transform: translateX(-120px); } }
+@keyframes pan-mid  { to { transform: translateX(-290px); } }
+@keyframes pan-near { to { transform: translateX(-540px); } }
 
 /* Staggered arrival. Blocks rise and settle; headings also resolve weight. */
 .reveal {
@@ -59,6 +66,14 @@ h1.reveal, h2.reveal {
   transition-delay: var(--reveal-delay, 0ms);
 }
 h1.reveal.is-in, h2.reveal.is-in { letter-spacing: .004em; }
+
+/* The wave. Rotation only, about the shoulder — the sleeve and hand are one
+   group so they travel together. Three cycles then stop: a character who waves
+   forever stops reading as a greeting and starts reading as a loading state. */
+@keyframes wave {
+  0%, 100% { transform: rotate(-7deg); }
+  50%      { transform: rotate(15deg); }
+}
 
 /* The rotating role line, typed. The characters are written by rotator.ts;
    the only thing CSS owns is the caret, and it is added by `.is-typing` so it
@@ -115,6 +130,11 @@ h1.reveal.is-in, h2.reveal.is-in { letter-spacing: .004em; }
   /* rotate() returns before it can add `.is-typing`, so the caret never
      renders here. This is the belt to that braces. */
   .rotator.is-typing .word::after { animation: none; opacity: 0; }
+
+  /* character() returns early too, so the figure stays awake with the arm up
+     and never waves. He still reads as relaxed — the pose does that, not the
+     motion — which is why this is a variant and not a switch. */
+  .character .arm-wave, .character .arm-rest { transition: none; animation: none; }
 
   /* Ambient loops stop. The scene stays composed, it just holds still.
      Shooting stars are removed rather than paused — a streak frozen

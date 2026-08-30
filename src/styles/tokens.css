@@ -34,6 +34,7 @@
 @property --edge          { syntax: '<color>'; inherits: true; initial-value: rgba(28,39,48,.13); }
 @property --accent        { syntax: '<color>'; inherits: true; initial-value: #8A5E2A; }
 @property --accent-soft   { syntax: '<color>'; inherits: true; initial-value: rgba(138,94,42,.13); }
+@property --on-accent     { syntax: '<color>'; inherits: true; initial-value: #FCF8F2; }
 @property --skin          { syntax: '<color>'; inherits: true; initial-value: #D2A078; }
 @property --skin-shade    { syntax: '<color>'; inherits: true; initial-value: #B07C55; }
 @property --hair          { syntax: '<color>'; inherits: true; initial-value: #241C15; }
@@ -67,6 +68,7 @@
   --edge:rgba(28,39,48,.13);
   --accent:#8A5E2A;
   --accent-soft:rgba(138,94,42,.13);
+  --on-accent:#FCF8F2;         /* text on a solid --accent fill */
 
   /* ---- the avatar. Decorative and aria-hidden, but it is themed like
        everything else: the hoodie darkens and the skin warms down at night
@@ -141,6 +143,7 @@
     --edge var(--dur-theme) var(--ease),
     --accent var(--dur-theme) var(--ease),
     --accent-soft var(--dur-theme) var(--ease),
+    --on-accent var(--dur-theme) var(--ease),
     --skin var(--dur-theme) var(--ease),
     --skin-shade var(--dur-theme) var(--ease),
     --hair var(--dur-theme) var(--ease),
@@ -174,6 +177,7 @@
     --edge:rgba(221,229,236,.14);
     --accent:#D8AE72;
     --accent-soft:rgba(216,174,114,.15);
+    --on-accent:#1A1206;
 
     --skin:#C08C63;
     --skin-shade:#9C6E4A;
@@ -207,6 +211,7 @@
   --edge:rgba(221,229,236,.14);
   --accent:#D8AE72;
   --accent-soft:rgba(216,174,114,.15);
+  --on-accent:#1A1206;
 
   --skin:#C08C63;
   --skin-shade:#9C6E4A;

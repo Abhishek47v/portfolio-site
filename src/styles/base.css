@@ -108,10 +108,28 @@ button {
 .first-screen {
   display: flex;
   flex-direction: column;
+  /* The group is centred as a whole. Previously .hero absorbed all the slack
+     and centred its own content, which split the leftover space above *and
+     below* the description — and the half below it read as a gap before the
+     stats. Centring here puts the slack outside the group instead. */
+  justify-content: center;
   /* The extra 1px is the bar's own bottom border: --bar-h is the *inner*
      height of .bar-inner, and .bar adds a 1px rule under it. Without this the
      strip's last pixel row sits exactly on the fold. */
   min-height: calc(100svh - var(--bar-h) - 1px);
+  /* Sits a little below the header rather than hard against it, and because
+     this is margin the whole document moves with it — the sheet and every
+     section below follow. Kept small on purpose: it spends the slack that
+     keeps the call to action above the fold, and on a 740px-tall phone there
+     is only about 18px of that slack to spend. */
+  margin-top: clamp(1.25rem, 8vh, 6rem);
+}
+
+/* On a phone the fold budget is almost spent already — the full shift left
+   only 4px between the button and the bottom of a 740px screen, which one
+   line of real copy would erase. */
+@media (max-width: 560px) {
+  .first-screen { margin-top: .4rem; }
 }
 
 .sheet {

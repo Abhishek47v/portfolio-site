@@ -1,0 +1,144 @@
+---
+/**
+ * Character — a reclining figure above the name. Hoodie, modern crop, propped
+ * on one elbow, waving.
+ *
+ * **Two states, and only one of them is ever really seen.** Awake is the
+ * default and lives in the markup, so with JavaScript off — or under reduced
+ * motion, where `character()` returns early — he is simply awake and waving-arm-
+ * up. Asleep is added by script when he leaves the viewport, which means the
+ * sleeping pose is visible only at the edges of the transition: on the way out,
+ * and for the moment before he wakes on the way back in. That is deliberate. A
+ * breathing loop was considered and dropped for the same reason — it would only
+ * ever run on an element nobody is looking at.
+ *
+ * Limbs are thick strokes with round caps rather than filled outlines. It is
+ * the same flat vocabulary as the rest of the site, it stays legible at 400px
+ * wide, and it avoids the long hand-authored path data that a figure drawn as
+ * fills would need.
+ *
+ * The viewBox is cropped tight to the drawing. Slack inside it is invisible
+ * but not free — it becomes a gap between the figure and whatever sits under
+ * it, and no amount of margin tuning outside the SVG can close it.
+ *
+ * Decorative throughout: the hero says who this is in text, so the whole thing
+ * is aria-hidden and adds nothing to the accessible name.
+ */
+---
+
+<svg
+  class="character"
+  viewBox="0 0 268 118"
+  role="presentation"
+  aria-hidden="true"
+  focusable="false"
+>
+  <!-- Legs first: behind the torso. Crossed rather than stacked so they read
+       as two, and ending in the same round caps as the arms — shoes were two
+       dark blobs that pulled the eye to the wrong end of the figure. -->
+  <g class="legs">
+    <path class="leg" d="M148 84 L206 94 L252 98" />
+    <path class="leg leg--near" d="M144 76 L200 68 L236 92" />
+  </g>
+
+  <!-- The arm he is propped on. Short: the elbow sits just under the torso,
+       not out on a long diagonal. -->
+  <path class="arm" d="M68 72 L40 104 L24 74" />
+  <circle class="hand" cx="22" cy="70" r="9" />
+
+  <!-- Torso: one even capsule. A tapered waist read as a body that changed
+       size along its length. -->
+  <path class="torso" d="M64 66 L144 78" />
+
+  <!-- Head, overlapping the torso so the two are joined. The neck is a stub
+       drawn behind it and is mostly hidden — any visible length reads as a
+       gap between the face and the body. -->
+  <path class="neck" d="M44 58 L52 62" />
+  <ellipse class="head" cx="28" cy="52" rx="20" ry="21" />
+  <path class="hair" d="M8 54C6 34 15 25 28 25C41 25 50 34 48 54C47 45 44 39 40 36C34 41 23 42 15 39C11 37 9 43 8 54Z" />
+
+  <g class="face-awake">
+    <circle class="eye" cx="20" cy="50" r="2.4" />
+    <circle class="eye" cx="36" cy="50" r="2.4" />
+  </g>
+  <g class="face-asleep">
+    <path class="lid" d="M16 50q4 4 8 0" />
+    <path class="lid" d="M32 50q4 4 8 0" />
+  </g>
+  <path class="mouth" d="M22 60q6 5 12 0" />
+
+  <!-- The free arm, drawn twice rather than rotated once: swinging the raised
+       arm down about the shoulder buried the sleeve inside the torso. The
+       resting sleeve is a shade darker so it separates from the hoodie. -->
+  <g class="arm-wave">
+    <path class="arm" d="M79 62 L106 40 L116 18" />
+    <circle class="hand" cx="118" cy="15" r="9" />
+  </g>
+  <g class="arm-rest">
+    <path class="arm arm--rest" d="M79 62 L110 74 L136 78" />
+    <circle class="hand" cx="138" cy="79" r="8.5" />
+  </g>
+</svg>
+
+<style>
+  .character { display: block; width: 100%; height: auto; overflow: visible; }
+
+  .torso { fill: none; stroke: var(--hoodie); stroke-width: 42; stroke-linecap: round; }
+  .arm {
+    fill: none;
+    stroke: var(--hoodie);
+    stroke-width: 15;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .leg {
+    fill: none;
+    stroke: var(--hoodie-shade);
+    stroke-width: 19;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  /* A stub, not a limb. Any real length here reads as a long brown sausage
+     under the chin — the head and the hood should almost touch. */
+  .neck { fill: none; stroke: var(--skin-shade); stroke-width: 12; stroke-linecap: round; }
+  .head { fill: var(--skin); }
+  .hand { fill: var(--skin); }
+  .hair { fill: var(--hair); }
+  .eye { fill: var(--hair); }
+  .lid {
+    fill: none;
+    stroke: var(--hair);
+    stroke-width: 2;
+    stroke-linecap: round;
+  }
+  .mouth {
+    fill: none;
+    stroke: var(--hair);
+    stroke-width: 1.8;
+    stroke-linecap: round;
+  }
+
+  /* Awake is the resting state, so it is what no-JS and reduced motion get. */
+  .face-asleep { display: none; }
+  .character.is-asleep .face-awake { display: none; }
+  .character.is-asleep .face-asleep { display: block; }
+
+  .arm--rest { stroke: var(--hoodie-shade); }
+
+  /* The two arms cross-fade rather than cut, so waking reads as a movement.
+     Both are always in the DOM — only opacity changes — because toggling
+     `display` cannot be transitioned. */
+  .arm-wave, .arm-rest { transition: opacity 260ms var(--ease); }
+  .arm-rest { opacity: 0; }
+  .character.is-asleep .arm-wave { opacity: 0; }
+  .character.is-asleep .arm-rest { opacity: 1; }
+
+  /* The shoulder is the pivot, in viewBox units — `transform-box: view-box`
+     so the origin is read against the viewBox and not the rendered pixel box,
+     which changes with the element's width. */
+  .arm-wave {
+    transform-box: view-box;
+    transform-origin: 79px 62px;
+  }
+  .character.is-waving .arm-wave { animation: wave 640ms var(--ease) 3; }
+</style>

@@ -6,9 +6,9 @@ export const site = {
   name: 'Abhishek Verma',
   title: 'Software Engineer',
   location: 'Bangalore, India',
-  /** Show the illustrated avatar in the hero. Off leaves a purely
+  /** Show the illustrated character above the name. Off leaves a purely
    *  typographic hero — the design works either way. */
-  avatar: true,
+  character: true,
   /** The rotating line in the hero. Typed and retyped, one after another. */
   roles: [
     'full-stack development',

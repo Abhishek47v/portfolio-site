@@ -15,6 +15,7 @@ import { currentSection } from './nav';
 import { drawTimeline } from './timeline';
 import { pointerLight } from './pointer-light';
 import { rotate } from './rotator';
+import { character } from './character';
 
 const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -23,3 +24,4 @@ currentSection();
 drawTimeline();
 pointerLight(reduce);
 rotate(reduce);
+character(reduce);
