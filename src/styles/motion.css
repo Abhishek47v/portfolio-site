@@ -20,6 +20,27 @@
   100%    { transform: translate3d(38vw, 22vh, 0) rotate(16deg); opacity: 0; }
 }
 
+/* ---- the scroll-driven camera (D-044, option C) ----
+   Driven by `animation-timeline: scroll(root block)` where the components bind
+   them, so these run off the main thread with no scroll listener anywhere. The
+   distances are user units in the ridge viewBox (0-1200 wide); each band has
+   600 units of terrain hidden off each edge, so the largest pan here is half
+   the available margin. Depth sets the rate — far barely moves, near travels
+   four times as far, and that ratio is what the eye reads as distance. */
+@keyframes pan-far  { to { transform: translateX(-70px); } }
+@keyframes pan-mid  { to { transform: translateX(-160px); } }
+@keyframes pan-near { to { transform: translateX(-300px); } }
+
+/* The sky's own layers move least of all — the stars are the furthest thing
+   in the scene, so they lag almost to a standstill. In CSS px, not user
+   units: this layer is a full-viewport overlay, not the ridge viewBox. */
+@keyframes pan-stars { to { transform: translateX(-26px); } }
+
+/* The orb tracks a short arc. Deliberately short: it has to stay clear of the
+   reading column, and the contrast suite has no model of the orb's glow, so a
+   moon wandering behind body text is a failure no gate here would catch. */
+@keyframes orb-track { to { transform: translate(-11vw, 7vh); } }
+
 /* Staggered arrival. Blocks rise and settle; headings also resolve weight. */
 .reveal {
   opacity: 0;
@@ -107,6 +128,12 @@ h1.reveal.is-in, h2.reveal.is-in { letter-spacing: .004em; }
      mid-flight would read as a rendering fault. */
   .u-drift, .u-twinkle { animation: none !important; }
   .shooter { display: none !important; }
+
+  /* The camera does not run. The components bind their scroll timelines inside
+     `prefers-reduced-motion: no-preference`, so this is belt to that braces —
+     the composition simply holds the position it starts in, which is the
+     pre-camera design exactly. */
+  .r-far, .r-mid, .r-near, .stars, .orb { animation: none !important; }
 }
 
 .u-drift   { animation: drift var(--drift-dur, 130s) linear infinite; }

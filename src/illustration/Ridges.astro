@@ -1,9 +1,26 @@
 ---
 /**
- * Ridges — the constant horizon. Three bands by default, two below 640px:
- * three reads as clutter on a phone (04-experience.md §7).
- * Static (D-027): no parallax, no scroll listener. Depth comes from layering
- * and colour separation alone.
+ * Ridges — the terrain the camera travels across.
+ *
+ * Three bands by default, two below 640px: three reads as clutter on a phone
+ * (04-experience.md §7).
+ *
+ * **Option C — the scroll-driven camera (D-044).** Each band pans horizontally
+ * as the page scrolls, at a rate set by its depth: the far hills barely move,
+ * the near ones travel four times as far. Vertical scrolling therefore reads as
+ * lateral travel through a landscape rather than as a page moving over a
+ * backdrop. This supersedes the "no parallax, no scroll listener" half of
+ * D-027.
+ *
+ * There is still no scroll listener. `animation-timeline: scroll()` is native
+ * CSS: the browser drives the animation from scroll position off the main
+ * thread, so the page needs no JavaScript for any of this and `nojs.spec.ts`
+ * is untouched. Browsers without support fall through the `@supports` guard to
+ * the static composition, which is exactly the pre-camera design.
+ *
+ * The paths span -600 → 1800 in a 0 → 1200 viewBox: 600 user units of terrain
+ * hidden off each edge, so panning never exposes a hard edge. The furthest a
+ * band travels is 300, half the margin.
  */
 ---
 
@@ -14,9 +31,9 @@
   viewBox="0 0 1200 300"
   preserveAspectRatio="none"
 >
-  <path class="r-far"  d="M0 148 q150-58 300-30 q170 32 330-22 q160-54 320-8 q140 40 250 12 v198 H0 Z" />
-  <path class="r-mid"  d="M0 200 q180-46 340-16 q180 34 340-18 q170-56 330-4 q110 36 190 14 v124 H0 Z" />
-  <path class="r-near" d="M0 248 q200-38 380-10 q200 30 400-16 q200-46 420 6 v72 H0 Z" />
+  <path class="r-far"  d="M-600 150 q150-58 300-30 q170 32 330-22 q160-54 320-8 q140 40 250 12 q150-50 300-26 q170 34 330-18 q160-50 320-10 q140 42 250 14 v210 H-600 Z" />
+  <path class="r-mid"  d="M-600 202 q180-46 340-16 q180 34 340-18 q170-56 330-4 q110 36 190 14 q180-44 340-14 q180 32 340-16 q170-54 330-6 q110 34 190 12 v190 H-600 Z" />
+  <path class="r-near" d="M-600 250 q200-38 380-10 q200 30 400-16 q200-46 420 6 q200-36 380-12 q200 28 400-14 q200-44 420 8 v150 H-600 Z" />
 </svg>
 
 <style>
@@ -34,6 +51,21 @@
   .r-far  { fill: var(--ridge-far); }
   .r-mid  { fill: var(--ridge-mid); }
   .r-near { fill: var(--ridge-near); }
+
+  /* The camera. Rates are the whole illusion: if they were equal the terrain
+     would slide as one flat sheet and read as a bug rather than as depth. */
+  @supports (animation-timeline: scroll()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .r-far, .r-mid, .r-near {
+        animation-timeline: scroll(root block);
+        animation-timing-function: linear;
+        animation-fill-mode: both;
+      }
+      .r-far  { animation-name: pan-far; }
+      .r-mid  { animation-name: pan-mid; }
+      .r-near { animation-name: pan-near; }
+    }
+  }
 
   @media (max-width: 640px) {
     .r-far { display: none; }

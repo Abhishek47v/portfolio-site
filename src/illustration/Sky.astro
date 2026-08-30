@@ -1,7 +1,8 @@
 ---
 /**
- * Sky — the page's ground. Static per theme (D-027): day and night are two
- * authored palettes, not an inversion, and neither reacts to scroll.
+ * Sky — the page's ground. Two authored palettes per theme (D-027): day and
+ * night, not an inversion. The *colour* still never reacts to scroll; as of
+ * D-044 the star and orb layers do move. See the note below.
  *
  * Everything here is decorative and CSS-driven. There is no JavaScript behind
  * this component at all — visibility per theme is handled by tokens that
@@ -12,6 +13,13 @@
  *
  * The orb is one disc — a sun by day, a full moon by night. The tokens decide
  * which; the shape never changes.
+ *
+ * **Option C — the camera (D-044).** The stars and the orb drift with scroll,
+ * far more slowly than the terrain: they are the most distant things in the
+ * scene, so they should barely move. The sky *gradient* is deliberately left
+ * alone — every colour role feeding contrast.spec.ts reads off those stops,
+ * and a sky that changes with scroll position would make the contrast result a
+ * function of where you happen to be on the page. Motion here, colour never.
  */
 let seed = 20260830;
 function rand(): number {
@@ -137,12 +145,15 @@ const clouds = [
     scale: var(--cloud-scale, 1);
   }
 
-  /* Fixed, always visible, and never animated (D-027). Sits high and to the
-     right, clear of the reading column at every breakpoint. */
+  /* Always visible, and high and to the right — clear of the reading column at
+     every breakpoint. It now tracks a short arc with scroll (D-044); the arc is
+     kept short precisely so "clear of the reading column" stays true, because
+     nothing in the suite checks the orb's glow against text. */
   .orb {
     position: fixed;
     top: clamp(88px, 16vh, 172px);
     right: clamp(28px, 11vw, 190px);
+    will-change: transform;
     z-index: -3;
     width: clamp(52px, 6.5vw, 88px);
     aspect-ratio: 1;
@@ -150,6 +161,21 @@ const clouds = [
     background: var(--glow);
     box-shadow: 0 0 100px 46px var(--glow);
     pointer-events: none;
+  }
+
+  /* The camera's two slowest layers. Bound here rather than in motion.css
+     because the timeline binding belongs with the element it moves; the
+     keyframes themselves live in motion.css with every other one. */
+  @supports (animation-timeline: scroll()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .stars, .orb {
+        animation-timeline: scroll(root block);
+        animation-timing-function: linear;
+        animation-fill-mode: both;
+      }
+      .stars { animation-name: pan-stars; }
+      .orb { animation-name: orb-track; }
+    }
   }
 
   @media (max-width: 640px) {

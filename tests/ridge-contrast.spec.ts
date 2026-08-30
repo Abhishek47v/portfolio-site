@@ -50,14 +50,23 @@ const probe = `(() => {
   const bands = ['.r-near', '.r-mid', '.r-far']
     .map(sel => svg.querySelector(sel))
     .filter(el => el && getComputedStyle(el).display !== 'none')
-    .map(el => ({ el, fill: num(getComputedStyle(el).fill) }));
+    .map(el => ({ el, fill: num(getComputedStyle(el).fill), ctm: el.getScreenCTM().inverse() }));
 
-  /** The real colour painted behind a viewport point. */
+  /** The real colour painted behind a viewport point.
+   *
+   *  The screen -> user-space mapping comes from each band's own inverted
+   *  getScreenCTM, never from a hand-rolled scale off the viewBox. The bands
+   *  are translated by the scroll camera (D-044), and a manual mapping would
+   *  keep sampling where the hill *used* to be — reporting a real ratio
+   *  against the wrong background, which is the precise failure this file was
+   *  written to catch in the first place. The CTM carries the transform, so
+   *  this stays correct however the camera moves them. */
   const behind = (x, y) => {
     if (y >= box.top && y <= box.bottom) {
-      const p = new DOMPoint(((x - box.left) / box.width) * 1200,
-                             ((y - box.top) / box.height) * 300);
-      for (const b of bands) if (b.el.isPointInFill(p)) return b.fill.slice(0, 3);
+      const screen = new DOMPoint(x, y);
+      for (const b of bands) {
+        if (b.el.isPointInFill(screen.matrixTransform(b.ctm))) return b.fill.slice(0, 3);
+      }
     }
     return skyAt(Math.min(1, Math.max(0, y / window.innerHeight)));
   };
