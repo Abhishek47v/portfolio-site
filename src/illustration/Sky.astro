@@ -1,8 +1,15 @@
 ---
 /**
- * Sky — the page's ground. Two authored palettes per theme (D-027): day and
- * night, not an inversion. The *colour* still never reacts to scroll; as of
- * D-044 the star and orb layers do move. See the note below.
+ * Sky — the page's ground. Static per theme (D-027): day and night are two
+ * authored palettes, not an inversion, and nothing here reacts to scroll.
+ *
+ * That is the whole division of labour with the terrain (D-044): the ground
+ * travels, the sky does not. A camera panning the hills *and* the sky moves
+ * everything at once, which reads as the page sliding rather than as depth —
+ * the sky holding still is what gives the terrain something to move against.
+ * The ambient loops stay: clouds drift, stars twinkle, a shooting star
+ * crosses. Those are authored atmosphere and predate the camera; none of them
+ * is driven by scroll position.
  *
  * Everything here is decorative and CSS-driven. There is no JavaScript behind
  * this component at all — visibility per theme is handled by tokens that
@@ -145,15 +152,15 @@ const clouds = [
     scale: var(--cloud-scale, 1);
   }
 
-  /* Always visible, and high and to the right — clear of the reading column at
-     every breakpoint. It now tracks a short arc with scroll (D-044); the arc is
-     kept short precisely so "clear of the reading column" stays true, because
-     nothing in the suite checks the orb's glow against text. */
+  /* Fixed, always visible, and never animated (D-027). Sits high and to the
+     right, clear of the reading column at every breakpoint. A scroll-tracked
+     arc was tried (D-044) and removed: it moved the one element the contrast
+     suite cannot see — nothing checks the orb's glow against text — and it
+     cost the stillness the terrain needs to read as moving. */
   .orb {
     position: fixed;
     top: clamp(88px, 16vh, 172px);
     right: clamp(28px, 11vw, 190px);
-    will-change: transform;
     z-index: -3;
     width: clamp(52px, 6.5vw, 88px);
     aspect-ratio: 1;
@@ -161,21 +168,6 @@ const clouds = [
     background: var(--glow);
     box-shadow: 0 0 100px 46px var(--glow);
     pointer-events: none;
-  }
-
-  /* The camera's two slowest layers. Bound here rather than in motion.css
-     because the timeline binding belongs with the element it moves; the
-     keyframes themselves live in motion.css with every other one. */
-  @supports (animation-timeline: scroll()) {
-    @media (prefers-reduced-motion: no-preference) {
-      .stars, .orb {
-        animation-timeline: scroll(root block);
-        animation-timing-function: linear;
-        animation-fill-mode: both;
-      }
-      .stars { animation-name: pan-stars; }
-      .orb { animation-name: orb-track; }
-    }
   }
 
   @media (max-width: 640px) {

@@ -26,20 +26,13 @@
    distances are user units in the ridge viewBox (0-1200 wide); each band has
    600 units of terrain hidden off each edge, so the largest pan here is half
    the available margin. Depth sets the rate — far barely moves, near travels
-   four times as far, and that ratio is what the eye reads as distance. */
+   four times as far, and that ratio is what the eye reads as distance.
+
+   Only the terrain is listed here. The sky holds still by design (D-027): it
+   is what the hills move against, and without it the whole page just slides. */
 @keyframes pan-far  { to { transform: translateX(-70px); } }
 @keyframes pan-mid  { to { transform: translateX(-160px); } }
 @keyframes pan-near { to { transform: translateX(-300px); } }
-
-/* The sky's own layers move least of all — the stars are the furthest thing
-   in the scene, so they lag almost to a standstill. In CSS px, not user
-   units: this layer is a full-viewport overlay, not the ridge viewBox. */
-@keyframes pan-stars { to { transform: translateX(-26px); } }
-
-/* The orb tracks a short arc. Deliberately short: it has to stay clear of the
-   reading column, and the contrast suite has no model of the orb's glow, so a
-   moon wandering behind body text is a failure no gate here would catch. */
-@keyframes orb-track { to { transform: translate(-11vw, 7vh); } }
 
 /* Staggered arrival. Blocks rise and settle; headings also resolve weight. */
 .reveal {
@@ -133,7 +126,7 @@ h1.reveal.is-in, h2.reveal.is-in { letter-spacing: .004em; }
      `prefers-reduced-motion: no-preference`, so this is belt to that braces —
      the composition simply holds the position it starts in, which is the
      pre-camera design exactly. */
-  .r-far, .r-mid, .r-near, .stars, .orb { animation: none !important; }
+  .r-far, .r-mid, .r-near { animation: none !important; }
 }
 
 .u-drift   { animation: drift var(--drift-dur, 130s) linear infinite; }
