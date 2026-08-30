@@ -6,7 +6,40 @@
    The sky is static per theme (D-027). Day and night are two authored
    palettes, not an inversion. Retuning either one happens here and
    nowhere else — no script contains a colour.
+
+   Every colour role is registered with @property below so that a theme
+   change can be *interpolated* rather than cut (D-036). Registration is
+   what makes it possible: an unregistered custom property is a raw token
+   substitution and jumps, and `background-image` gradients — the sky, the
+   largest surface on the page — cannot be transitioned any other way.
+   Browsers without @property simply keep the old instant switch.
    ============================================================ */
+
+@property --sky-high      { syntax: '<color>'; inherits: true; initial-value: #7FA3C4; }
+@property --sky-mid       { syntax: '<color>'; inherits: true; initial-value: #BCD2DF; }
+@property --sky-low       { syntax: '<color>'; inherits: true; initial-value: #E8EDEA; }
+@property --ridge-far     { syntax: '<color>'; inherits: true; initial-value: #AFC0BD; }
+@property --ridge-mid     { syntax: '<color>'; inherits: true; initial-value: #8DA298; }
+@property --ridge-near    { syntax: '<color>'; inherits: true; initial-value: #7E948A; }
+@property --glow          { syntax: '<color>'; inherits: true; initial-value: #F6DFAE; }
+@property --star          { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --cloud         { syntax: '<color>'; inherits: true; initial-value: rgba(255,255,255,.62); }
+@property --ink           { syntax: '<color>'; inherits: true; initial-value: #1C2730; }
+@property --ink-soft      { syntax: '<color>'; inherits: true; initial-value: #414D58; }
+@property --ink-faint     { syntax: '<color>'; inherits: true; initial-value: #59656F; }
+@property --surface       { syntax: '<color>'; inherits: true; initial-value: rgba(255,255,255,.74); }
+@property --surface-strong{ syntax: '<color>'; inherits: true; initial-value: rgba(255,255,255,.86); }
+@property --sheet         { syntax: '<color>'; inherits: true; initial-value: rgba(255,255,255,.88); }
+@property --surface-solid { syntax: '<color>'; inherits: true; initial-value: #EDF1F3; }
+@property --edge          { syntax: '<color>'; inherits: true; initial-value: rgba(28,39,48,.13); }
+@property --accent        { syntax: '<color>'; inherits: true; initial-value: #8A5E2A; }
+@property --accent-soft   { syntax: '<color>'; inherits: true; initial-value: rgba(138,94,42,.13); }
+@property --skin          { syntax: '<color>'; inherits: true; initial-value: #D2A078; }
+@property --skin-shade    { syntax: '<color>'; inherits: true; initial-value: #B07C55; }
+@property --hair          { syntax: '<color>'; inherits: true; initial-value: #241C15; }
+@property --hoodie        { syntax: '<color>'; inherits: true; initial-value: #4A5A68; }
+@property --hoodie-shade  { syntax: '<color>'; inherits: true; initial-value: #384552; }
+@property --hoodie-cord   { syntax: '<color>'; inherits: true; initial-value: #E4EAEE; }
 
 :root {
   /* ---- the day sky: static. Colour intensity sits above and below the
@@ -16,7 +49,8 @@
   --sky-low:#E8EDEA;
   --ridge-far:#AFC0BD;
   --ridge-mid:#8DA298;
-  --ridge-near:#697F75;
+  --ridge-near:#7E948A;   /* lightened from #697F75 so --ink labels on bare
+                             sky clear 4.5:1 over the near hill (D-041) */
   --glow:#F6DFAE;              /* the sun */
   --star:transparent;          /* stars and shooting stars — night only */
   --cloud:rgba(255,255,255,.62); /* clouds — day only */
@@ -33,6 +67,16 @@
   --edge:rgba(28,39,48,.13);
   --accent:#8A5E2A;
   --accent-soft:rgba(138,94,42,.13);
+
+  /* ---- the avatar. Decorative and aria-hidden, but it is themed like
+       everything else: the hoodie darkens and the skin warms down at night
+       so the figure sits in the same light as the sky behind it. ---- */
+  --skin:#D2A078;
+  --skin-shade:#B07C55;
+  --hair:#241C15;
+  --hoodie:#4A5A68;
+  --hoodie-shade:#384552;
+  --hoodie-cord:#E4EAEE;
 
   /* ---- type ---- */
   --font-display:"Instrument Serif","Iowan Old Style",Georgia,serif;
@@ -57,7 +101,52 @@
   /* ---- motion ---- */
   --dur-fast:240ms;
   --dur:600ms;
+  --dur-theme:480ms;     /* the day↔night dissolve; ThemeToggle mirrors it */
   --ease:cubic-bezier(.22,.61,.36,1);
+}
+
+/* The dissolve is opt-in, and deliberately so. It is declared only while
+   `.is-theming` is on the root — the toggle adds it, forces a reflow so the
+   transition is in effect *before* the palette flips, and removes it when the
+   fade is done. Two reasons it is not simply always-on:
+
+   1. The suite sets `data-theme` directly and samples computed colour
+      immediately. An always-on transition would have contrast.spec.ts reading
+      half-blended values — a gate that fails at random is worse than none.
+   2. An OS-level `prefers-color-scheme` flip changes the palette in the same
+      style pass that delivers the event, so there is no frame in which to arm
+      a transition. That path stays an instant switch rather than pretending.
+
+   No movement is involved — this is a colour dissolve — so it is left on
+   under reduced motion, where a hard cut between two full-viewport skies is
+   the more jarring of the two. */
+:root.is-theming {
+  transition:
+    --sky-high var(--dur-theme) var(--ease),
+    --sky-mid var(--dur-theme) var(--ease),
+    --sky-low var(--dur-theme) var(--ease),
+    --ridge-far var(--dur-theme) var(--ease),
+    --ridge-mid var(--dur-theme) var(--ease),
+    --ridge-near var(--dur-theme) var(--ease),
+    --glow var(--dur-theme) var(--ease),
+    --star var(--dur-theme) var(--ease),
+    --cloud var(--dur-theme) var(--ease),
+    --ink var(--dur-theme) var(--ease),
+    --ink-soft var(--dur-theme) var(--ease),
+    --ink-faint var(--dur-theme) var(--ease),
+    --surface var(--dur-theme) var(--ease),
+    --surface-strong var(--dur-theme) var(--ease),
+    --sheet var(--dur-theme) var(--ease),
+    --surface-solid var(--dur-theme) var(--ease),
+    --edge var(--dur-theme) var(--ease),
+    --accent var(--dur-theme) var(--ease),
+    --accent-soft var(--dur-theme) var(--ease),
+    --skin var(--dur-theme) var(--ease),
+    --skin-shade var(--dur-theme) var(--ease),
+    --hair var(--dur-theme) var(--ease),
+    --hoodie var(--dur-theme) var(--ease),
+    --hoodie-shade var(--dur-theme) var(--ease),
+    --hoodie-cord var(--dur-theme) var(--ease);
 }
 
 /* ---- night ---- */
@@ -75,7 +164,7 @@
     --cloud:transparent;
 
 
-      --ink:#DDE5EC;
+    --ink:#DDE5EC;
     --ink-soft:#B3C0CC;
     --ink-faint:#A4B1BE;
     --surface:rgba(13,21,33,.74);
@@ -85,6 +174,13 @@
     --edge:rgba(221,229,236,.14);
     --accent:#D8AE72;
     --accent-soft:rgba(216,174,114,.15);
+
+    --skin:#C08C63;
+    --skin-shade:#9C6E4A;
+    --hair:#15110D;
+    --hoodie:#3E4C61;
+    --hoodie-shade:#2E3948;
+    --hoodie-cord:#AEBCC9;
   }
 }
 
@@ -111,4 +207,11 @@
   --edge:rgba(221,229,236,.14);
   --accent:#D8AE72;
   --accent-soft:rgba(216,174,114,.15);
+
+  --skin:#C08C63;
+  --skin-shade:#9C6E4A;
+  --hair:#15110D;
+  --hoodie:#3E4C61;
+  --hoodie-shade:#2E3948;
+  --hoodie-cord:#AEBCC9;
 }

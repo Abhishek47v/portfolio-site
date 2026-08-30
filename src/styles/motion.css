@@ -32,23 +32,40 @@
 .reveal.is-in { opacity: 1; transform: none; }
 
 /* Instrument Serif ships one weight, so headings settle by letter-spacing
-   rather than by axis — the same idea, done with what the face offers. */
+   rather than by axis — the same idea, done with what the face offers. The
+   settle now resolves *open* rather than tight: it used to end at -.025em,
+   which meant every heading animated itself into the compressed state the
+   design was trying to avoid (D-040). */
 h1.reveal, h2.reveal {
-  letter-spacing: -.005em;
+  letter-spacing: .028em;
   transition:
     opacity var(--dur) var(--ease),
     transform var(--dur) var(--ease),
     letter-spacing 800ms var(--ease);
   transition-delay: var(--reveal-delay, 0ms);
 }
-h1.reveal.is-in, h2.reveal.is-in { letter-spacing: -.025em; }
+h1.reveal.is-in, h2.reveal.is-in { letter-spacing: .004em; }
 
-/* The rotating role line. */
-.rotator .word {
-  display: inline-block;
-  transition: opacity 320ms var(--ease), transform 320ms var(--ease);
+/* The rotating role line, typed. The characters are written by rotator.ts;
+   the only thing CSS owns is the caret, and it is added by `.is-typing` so it
+   never appears beside a line that is standing still — with JavaScript off, or
+   under reduced motion, a blinking caret on static text would be a lie. */
+@keyframes caret {
+  0%, 45%  { opacity: 1; }
+  55%, 100% { opacity: 0; }
 }
-.rotator.is-out .word { opacity: 0; transform: translateY(-6px); }
+
+.rotator .word { display: inline-block; }
+.rotator.is-typing .word::after {
+  content: '';
+  display: inline-block;
+  width: .06em;
+  height: .9em;
+  margin-left: .06em;
+  vertical-align: -.08em;
+  background: currentColor;
+  animation: caret 1.05s steps(1, end) infinite;
+}
 
 /* The timeline draws itself once, when it comes into view. */
 .timeline-track {
@@ -75,13 +92,15 @@ h1.reveal.is-in, h2.reveal.is-in { letter-spacing: -.025em; }
     transform: none;
     transition: opacity 200ms linear;
     transition-delay: 0ms;
-    letter-spacing: -.025em;
+    letter-spacing: .004em;
   }
 
   /* The timeline is drawn, not animated into being. */
   .timeline-track { transform: scaleY(1); transition: none; }
   .entry-dot { transform: scale(1); transition: none; }
-  .rotator .word { transition: none; }
+  /* rotate() returns before it can add `.is-typing`, so the caret never
+     renders here. This is the belt to that braces. */
+  .rotator.is-typing .word::after { animation: none; opacity: 0; }
 
   /* Ambient loops stop. The scene stays composed, it just holds still.
      Shooting stars are removed rather than paused — a streak frozen

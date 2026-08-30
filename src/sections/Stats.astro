@@ -1,0 +1,120 @@
+---
+/**
+ * The stats strip — the hero's closing line, in numbers.
+ *
+ * On bare sky, outside the sheet, so it reads as part of the introduction
+ * rather than as the first section of the document. That placement is a
+ * constraint, not a free choice: `Ridges` is `position: fixed`, so this strip
+ * scrolls across the ridge band, and the ridge fills are mid-tones the small
+ * mono labels cannot survive at `--ink-faint`. The labels are therefore set in
+ * `--ink` — the darkest role by day, lightest by night — which is what makes
+ * bare sky viable here at all. Do not soften them back down.
+ *
+ * The contrast suite does **not** cover this: its probe composites over the sky
+ * gradient and has no model of the ridge layer (D-039). This strip is verified
+ * against the real ridge geometry instead — see `tests/ridge-contrast.spec.ts`.
+ *
+ * Deliberately not a row of cards. Five identical bordered tiles is the exact
+ * shape D-030 removed for reading as machine-generated.
+ */
+import { stats } from '../data/stats';
+---
+
+<section class="stats" aria-label="Summary">
+  <ul class="wrap row" data-reveal>
+    {stats.map((s) => (
+      <li class="stat">
+        <span class="value tabular">{s.value}</span>
+        <span class="label">{s.label}</span>
+      </li>
+    ))}
+  </ul>
+</section>
+
+<style>
+  .stats { flex: 0 0 auto; padding-block: 0 clamp(1.25rem, 4vh, 2.5rem); }
+
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: clamp(1.5rem, 3.5vw, 2.5rem);
+    list-style: none;
+    /* margin-block, not margin — a blanket `margin: 0` to reset the list also
+       kills the `margin-inline: auto` that .wrap uses to centre itself, and the
+       scoped class outranks the primitive. The strip then pins to the left
+       gutter and only looks centred at exactly --wrap width. */
+    margin-block: 0;
+    margin-inline: auto;
+    /* Centred as a group rather than stretched across the measure: the strip
+       reads as one object under the hero instead of a row that happens to
+       start at the left gutter. */
+    justify-content: center;
+    /* No rule above it, no surface behind it — the strip is held by space
+       alone. .wrap supplies the inline padding. */
+    padding-block: clamp(1rem, 3vh, 1.85rem) 0;
+  }
+
+  /* Equal shares, free to wrap. The flex-basis is what sets the column count
+     at each width; see the note on the narrow breakpoint below. */
+  .stat {
+    /* No grow: the columns size to a common basis and the group centres.
+       Growing would spread them back out to the full measure. */
+    flex: 0 1 8.5rem;
+    min-width: 6.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: var(--s-2);
+  }
+
+  /* Body sans at 600, matching the hero's role line. The display serif has one
+     weight and reads light at this size — which is the wrong signal for the
+     one part of the page that is meant to land hardest (D-042). Height-capped
+     like the hero so the strip cannot grow itself under the fold. */
+  .value {
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: min(clamp(1.7rem, 1.2rem + 1.9vw, 2.5rem), 6vh);
+    line-height: 1;
+    letter-spacing: -.01em;
+    color: var(--ink);
+  }
+
+  /* Tighter tracking than the global .label because these sit in narrow
+     columns — and `--ink`, not `--ink-faint`, because this strip crosses the
+     ridges. See the note at the top of this file. */
+  .label { font-size: .63rem; letter-spacing: .13em; color: var(--ink); }
+
+  /* Two columns here, not three. At three the columns are ~110px and the two
+     longest labels — `Systems shipped`, `Hours automated` — break onto a second
+     line, which leaves the rows visibly unaligned and costs the strip the
+     at-a-glance quality it exists for. Two columns is the widest layout where
+     every label stays on one line. */
+  /* Three across on a phone, not two. Five stats at two-up is three rows deep,
+     which is the one thing that will not fit above the fold on a short screen —
+     and the fold is the entire point of the strip. The label size drops with it
+     so `Systems shipped` still holds one line at this column width. */
+  /* Tablet band. At the desktop basis five columns wrap to 4+1, and a single
+     orphaned stat on its own line reads as a mistake. A wider basis forces the
+     break to 3+2, which at least looks intended. */
+  @media (max-width: 860px) and (min-width: 561px) {
+    .stat { flex-basis: 11rem; }
+  }
+
+  @media (max-width: 560px) {
+    .row { gap: var(--s-4) var(--s-3); padding-block: var(--s-3) 0; }
+    .stat { flex-basis: 5.5rem; min-width: 5rem; gap: 3px; }
+    /* Three columns at this width means the two-word labels wrap. Rather than
+       shrink the type until they don't — which would put them under 9px — every
+       label is given the same two-line box, so a wrapped one and an unwrapped
+       one still sit on a common baseline. Uniform beats compact here. */
+    .label { font-size: .57rem; letter-spacing: .09em; min-height: 2.2em; }
+    .value { font-size: clamp(1.3rem, 6.2vw, 1.7rem); }
+  }
+
+  @media (max-height: 700px) {
+    .stats { padding-bottom: var(--s-3); }
+    .row { padding-top: var(--s-3); }
+  }
+</style>

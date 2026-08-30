@@ -12,7 +12,14 @@ html {
 /* The header is sticky, so an anchor target would otherwise land underneath
    it. Every jump clears the bar by its height plus a little air. */
 [id] { scroll-margin-top: calc(var(--bar-h) + var(--s-4)); }
-@media (max-width: 860px) { :root { --bar-h: 98px; } }
+/* 103px, not 98: below this width .bar-inner switches to `height: auto` with
+   its own padding-block and wraps the nav onto a second row, which measures
+   102.5px. The token has to match what the bar actually renders — it is what
+   [id] scroll-margin clears and what .first-screen subtracts, so a token that
+   understates it lands anchors under the header and pushes the stats strip
+   below the fold by exactly the difference. Change the bar's padding and this
+   number has to move with it. */
+@media (max-width: 860px) { :root { --bar-h: 103px; } }
 
 body {
   min-height: 100svh;
@@ -26,14 +33,20 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+/* Headings are set open, not tight. Instrument Serif is already a narrow,
+   high-contrast face; negative tracking on top of it was what made the titles
+   read as compressed, and 1.06 leading closed up the descenders on any heading
+   that ran to two lines. Both are now neutral-to-open. If a heading still
+   reads too narrow, that is the typeface itself and the fix is a wider display
+   face, not more tracking (D-040). */
 h1, h2, h3, h4 {
   font-family: var(--font-display);
   font-weight: 400;
-  line-height: 1.06;
-  letter-spacing: -.015em;
+  line-height: 1.16;
+  letter-spacing: .004em;
   text-wrap: balance;
 }
-h1 { font-size: var(--step-4); letter-spacing: -.025em; }
+h1 { font-size: var(--step-4); letter-spacing: 0; line-height: 1.08; }
 h2 { font-size: var(--step-3); }
 h3 { font-size: var(--step-2); }
 h4 { font-size: var(--step-1); }
@@ -80,6 +93,27 @@ button {
    sheet itself runs unbroken to the foot of the page, so it reads as the page
    rather than as a card. Sections inside are separated by hairlines and by
    changes of rhythm, never by more boxes. */
+/* The introduction and the numbers share the first screen. A statistic you
+   have to scroll to find is not doing the job a statistic exists for, so the
+   hero takes the space that is left after the strip is placed rather than the
+   strip taking what is left after the hero.
+
+   `svh`, not `vh`: on mobile, `vh` resolves against the *largest* viewport —
+   the one with the browser chrome retracted — so a `100vh` first screen is
+   taller than what is actually on screen and pushes the strip under the fold on
+   exactly the devices where the fold is tightest.
+
+   `min-height`, not `height`: on a viewport too short to hold both, this
+   overflows and scrolls normally instead of clipping the numbers off. */
+.first-screen {
+  display: flex;
+  flex-direction: column;
+  /* The extra 1px is the bar's own bottom border: --bar-h is the *inner*
+     height of .bar-inner, and .bar adds a 1px rule under it. Without this the
+     strip's last pixel row sits exactly on the fold. */
+  min-height: calc(100svh - var(--bar-h) - 1px);
+}
+
 .sheet {
   width: 100%;
   max-width: var(--wrap);

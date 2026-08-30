@@ -85,7 +85,7 @@ const probe = `(() => {
     const centre = Math.min(1, Math.max(0, ((top + bottom) / 2) / window.innerHeight));
     const bg = effective(el, skyAt(centre));
     for (const [name, ink] of Object.entries(inks)) {
-      results.push({ role: name, ratio: +ratio(ink, bg).toFixed(2), where: el.className.split(' ')[0] });
+      results.push({ role: name, ratio: +ratio(ink, bg).toFixed(2), where: el.className.trim().replace(/\s+/g, '.') });
     }
   }
   return results;

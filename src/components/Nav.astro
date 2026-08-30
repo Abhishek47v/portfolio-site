@@ -3,10 +3,17 @@
  * Section shortcuts. Real anchors, so they work with JavaScript off and can be
  * copied and shared; the active state is the only scripted part.
  */
+/* Order matters twice over: these are the shortcuts, and nav.ts resolves the
+   active one by taking the first of these keys that is on screen. Keep this
+   list in document order or the highlight lags behind the page.
+
+   'About' points at the hero rather than at a section of its own — the
+   introduction is the hero, and a second block restating it was the weakest
+   thing on the page. */
 const items = [
-  { href: '#now', label: 'Now' },
-  { href: '#work', label: 'Work' },
+  { href: '#about', label: 'About' },
   { href: '#experience', label: 'Experience' },
+  { href: '#work', label: 'Work' },
   { href: '#contact', label: 'Contact' },
 ];
 ---

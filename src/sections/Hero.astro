@@ -1,18 +1,31 @@
 ---
 import { site } from '../data/site';
 import { hasPublicFile } from '../lib/assets';
+import Avatar from '../illustration/Avatar.astro';
 
 const hasResume = hasPublicFile(site.links.resume);
+
+/* The typewriter erases to nothing between roles, so the line would collapse
+   and reflow on every swap if nothing held the width open. Reserve the longest
+   role instead of a guessed constant — add a role and the reserve follows. */
+const widest = Math.max(...site.roles.map((r) => r.length));
 ---
 
-<section class="hero" data-section-name="Intro" aria-labelledby="hero-name">
+<section id="about" class="hero" data-section-name="About" aria-labelledby="hero-name">
   <div class="wrap inner" data-reveal>
+    {site.avatar && <div class="portrait"><Avatar /></div>}
+
     <p class="greeting">Hey — I'm</p>
     <h1 id="hero-name">{site.name}</h1>
 
     <p class="doing">
       <span class="and">and I do</span>
-      <span class="rotator" aria-hidden="true" data-roles={site.roles.join('|')}>
+      <span
+        class="rotator"
+        aria-hidden="true"
+        data-roles={site.roles.join('|')}
+        style={`--roles-ch:${widest}`}
+      >
         <span class="word">{site.roles[0]}</span>
       </span>
       <span class="visually-hidden">{site.roles.join(', ')}.</span>
@@ -31,8 +44,24 @@ const hasResume = hasPublicFile(site.links.resume);
   /* No surface at all — the hero sits directly on the sky. At display sizes
      the ink clears contrast against every sky stop, so a panel here would be
      protecting text that does not need protecting (D-030). */
-  .hero { padding-block: clamp(4rem, 15vh, 9rem) clamp(3rem, 8vh, 6rem); }
+
+  /* Takes the space the stats strip leaves and centres its content in it,
+     rather than setting a fixed height of its own. Every size below is capped
+     against viewport *height* as well as width — on a short laptop screen the
+     width-based clamps alone are what push the strip under the fold. */
+  .hero {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    padding-block: clamp(1.25rem, 4vh, 2.75rem);
+  }
+  /* Left-aligned, as it was. Only the *stats* strip is centred; the
+     introduction reads as prose and prose is set ragged-right from a left
+     edge. What changed here is vertical: the hero now sizes itself to the
+     space the strip leaves. */
   .inner { display: flex; flex-direction: column; gap: var(--s-3); }
+
+  .portrait { width: min(clamp(72px, 9vw, 96px), 11vh); margin-bottom: var(--s-3); }
 
   .greeting {
     font-family: var(--font-mono);
@@ -41,11 +70,16 @@ const hasResume = hasPublicFile(site.links.resume);
     text-transform: uppercase;
     color: var(--ink-soft);
   }
-  h1 { margin-bottom: var(--s-2); }
+  h1 { margin-bottom: var(--s-2); font-size: min(var(--step-4), 12vh); }
 
+  /* Stays in the display serif at its single weight. A sans-semibold version
+     was tried and reverted: it pulled the eye away from the name directly above
+     it, and the accent colour already separates the role from the sentence.
+     The weight contrast on this page belongs to the stats strip alone (D-042).
+     Height-capped so it cannot push the strip below the fold. */
   .doing {
     font-family: var(--font-display);
-    font-size: clamp(1.5rem, 1rem + 2.4vw, 2.6rem);
+    font-size: min(clamp(1.5rem, 1rem + 2.4vw, 2.6rem), 5.5vh);
     line-height: 1.25;
     display: flex;
     flex-wrap: wrap;
@@ -54,14 +88,20 @@ const hasResume = hasPublicFile(site.links.resume);
   }
   .and { color: var(--ink-soft); }
   .rotator {
-    font-style: italic;
+    /* Roman, not italic. The italic was the only one on the page and, set in a
+       high-contrast display serif at hero size, it read as decorative rather
+       than emphatic. The accent colour already does the work of setting the
+       role apart from the sentence around it. */
     color: var(--accent);
-    /* Reserves the widest role so the line never reflows mid-swap. */
-    min-width: 10ch;
+    /* Holds the longest role open so the line never reflows mid-type. `ch` is
+       the width of a zero, which in this face is wider than the lowercase the
+       roles are actually set in — so this over-reserves slightly, which is the
+       safe direction to be wrong in. */
+    min-width: calc(var(--roles-ch, 10) * 1ch);
   }
 
   .intro {
-    margin-top: var(--s-4);
+    margin-top: var(--s-3);
     font-size: var(--step-1);
     line-height: 1.55;
     color: var(--ink-soft);
@@ -85,4 +125,42 @@ const hasResume = hasPublicFile(site.links.resume);
   }
   .action:hover { border-color: var(--accent); }
   .action--primary { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+
+  /* Short screens — the 768px and 700px laptops. The width-based clamps have
+     no idea the viewport is shallow, and the intro is the tallest single
+     element in the hero, so it is what gets trimmed first. */
+  @media (max-height: 780px) {
+    .inner { gap: var(--s-2); }
+    .intro { font-size: var(--step-0); line-height: 1.45; margin-top: var(--s-2); }
+    .actions { margin-top: var(--s-3); }
+    .portrait { margin-bottom: var(--s-2); }
+  }
+
+  /* Tablets and phones. --bar-h becomes 98px at this width because the nav
+     drops to its own row, which is 12% of a phone viewport gone before the
+     hero starts. Trim begins here, not at the phone breakpoint. */
+  @media (max-width: 860px) {
+    .portrait { width: min(72px, 9vh); margin-bottom: var(--s-2); }
+    .intro { font-size: var(--step-0); line-height: 1.48; }
+  }
+
+  /* Phones. The intro runs to seven lines at this measure and is the single
+     biggest cost above the fold. */
+  @media (max-width: 560px) {
+    .portrait { width: 54px; }
+    .doing { font-size: clamp(1.3rem, 6vw, 1.7rem); }
+    .intro { font-size: .94rem; line-height: 1.42; }
+    .actions { margin-top: var(--s-3); }
+  }
+
+  /* Genuinely short viewports — a 650px-tall window, or a phone in landscape.
+     Past this point there is nothing left to trim politely. */
+  @media (max-height: 700px) {
+    .hero { padding-block: var(--s-3); }
+    .inner { gap: 6px; }
+    .portrait { width: min(64px, 9vh); margin-bottom: 4px; }
+    h1 { margin-bottom: 2px; }
+    .intro { font-size: .95rem; line-height: 1.4; margin-top: 4px; }
+    .actions { margin-top: var(--s-2); }
+  }
 </style>

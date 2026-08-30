@@ -62,8 +62,31 @@
     btn?.classList.toggle('is-dark', isDark);
   }
 
+  // Mirrors --dur-theme in tokens.css. The class has to outlive the fade, so
+  // a little slack is deliberate.
+  const FADE = 480;
+  let settle = 0;
+
+  /**
+   * Arm the day/night dissolve.
+   *
+   * The transition is declared under `:root.is-theming` and nowhere else, so
+   * it has to be in effect *before* the palette changes — if the class and the
+   * new `data-theme` land in the same style pass there is no earlier value to
+   * interpolate from and the switch simply cuts. Reading `offsetWidth` forces
+   * the recalculation that separates them. It looks like a line doing nothing;
+   * removing it silently removes the fade.
+   */
+  function dissolve(): void {
+    root.classList.add('is-theming');
+    void root.offsetWidth;
+    window.clearTimeout(settle);
+    settle = window.setTimeout(() => root.classList.remove('is-theming'), FADE + 60);
+  }
+
   btn?.addEventListener('click', () => {
     const next = dark() ? 'light' : 'dark';
+    dissolve();
     root.setAttribute('data-theme', next);
     try { localStorage.setItem('hours:theme', next); } catch { /* storage blocked */ }
     sync();

@@ -713,3 +713,271 @@ padding and a stray hairline.
 
 **After:** 0 type errors, 0 warnings, 6 tests passing, first view 83.0 KB.
 **Status:** ACCEPTED — implemented
+
+## D-036 — The theme change is interpolated, not cut
+
+**Chosen:** every colour role in `tokens.css` is registered with `@property` as
+`syntax: '<color>'`, and `:root.is-theming` transitions all of them.
+
+**Reason:** a plain custom property is a token substitution — it has no type, so
+there is nothing to interpolate and a theme change lands as a hard cut. Two
+things follow from registering them instead:
+
+1. The sky is a `linear-gradient`, and `background-image` is not transitionable
+   in any browser. Animating the *stops* is the only way to dissolve the largest
+   surface on the page. Registration makes the stops animatable.
+2. One declaration at the root covers everything downstream. Because the values
+   inherit, every consumer — SVG `fill`, the veil, the ink, the avatar — follows
+   automatically, with no transition on any component and no `*` selector.
+
+**Why it is armed by a class rather than always on.** Two reasons, both learned
+the hard way rather than guessed:
+
+- `contrast.spec.ts` and `a11y.spec.ts` set `data-theme` directly and read
+  computed colour immediately afterwards. An always-on transition would have
+  them sampling half-blended values — an intermittently failing gate is worse
+  than no gate.
+- An OS-level `prefers-color-scheme` flip delivers the event in the same style
+  pass that changes the palette, so there is no frame in which to arm a
+  transition. That path stays an honest instant switch.
+
+**The trap it creates.** `ThemeToggle.astro` reads `root.offsetWidth` between
+adding the class and setting the attribute. It looks like a line doing nothing.
+It forces the style recalculation that separates the two, and without it both
+land in one pass, there is no earlier value to interpolate from, and the switch
+silently goes back to cutting. Anyone tidying it away removes the feature.
+
+**Cost:** browsers without `@property` (none current) keep the old instant
+switch. That is the whole fallback, and it is the previous behaviour.
+
+## D-037 — The hero gains a portrait, and the role line is typed
+
+**Chosen:** an optional illustrated avatar — hoodie, modern crop — above the
+greeting, and the rotating role line rewritten from a crossfade to a typewriter
+that types, holds, erases and types the next role.
+
+**Reason:** owner's direction. The crossfade was doing very little: two words
+dissolving into each other at the same width reads as a rendering glitch as
+easily as an effect. Typing is legible as an intention.
+
+**What holds it together.**
+
+- The avatar is inline SVG referencing token roles, never an `<img>` — the same
+  rule as every other illustration here, and for the same reason (D-013). It is
+  themed: the hoodie darkens and the skin warms down at night.
+- It is optional. `site.avatar` decides whether it renders; off, the hero is
+  purely typographic exactly as it was.
+- It is decorative and `aria-hidden`. The hero already says who this is in text,
+  so the portrait adds nothing to the accessible name.
+- The role line reserves the *longest* role (`--roles-ch`, derived in
+  `Hero.astro`) rather than a guessed constant. The typewriter erases to
+  nothing, so without a reserve the line collapses and reflows on every cycle.
+- The caret is CSS, applied by `.is-typing`, which only `rotate()` adds. With
+  JavaScript off or under reduced motion the line is a finished sentence with no
+  caret — a caret blinking beside static text would be a lie about what is
+  happening.
+
+## D-038 — Now is removed; About anchors the hero; Experience precedes Work
+
+**Supersedes the ordering rationale in `04-experience.md` §2 and the Now section
+in the content model.**
+
+**Chosen:** the Now section is deleted, along with `src/data/now.ts`. The nav
+gains **About**, pointing at the hero. Experience now comes before Work.
+
+**Reason:** owner's direction, and both halves stand up on their own.
+
+*Now* was a maintenance liability disguised as a feature: a dated block whose
+whole value is being current, on a site that is updated rarely. Stale, it says
+the opposite of what it was there to say. The hero already answers "is this
+person active" without a timestamp to keep honest.
+
+The reversal of Work and Experience overturns a rationale recorded earlier —
+that for an early-career engineer the projects are the more interesting
+evidence. The counter-argument is that the roles establish who is speaking, and
+the projects then read as evidence rather than as a list of side work. The
+Résumé link in the header still means nobody has to scroll for the credential
+path, which is what the original argument actually rested on.
+
+**Note for whoever maintains `nav.ts`:** the nav list is in document order on
+purpose. The active-section highlight resolves by taking the first key that is
+on screen, so a nav array out of step with the page makes the highlight lag.
+
+## D-039 — The stats strip, and why it is not on bare sky
+
+**Chosen:** a six-figure summary strip — years, projects, systems, hours
+automated, events/day, uptime — as the **first band of the sheet**, directly
+below the hero's `See the work` button and above Experience.
+
+**Reason:** owner's direction. It answers "is this person any good" in the two
+seconds before anyone decides to scroll, which is the one job the hero cannot do
+with prose alone.
+
+**Two things it is deliberately not.**
+
+*Not a row of cards.* Six identical bordered tiles is precisely the shape D-030
+removed from this page for reading as machine-generated — and a stats row is the
+most tempting place in any portfolio to reintroduce it. These are separated by
+space and by the band's own hairline. No borders, no per-item background.
+
+*Not on bare sky.* It was first placed between the hero and the sheet, which is
+where it belongs by reading order. It is unusable there, and the reason
+generalises: **`Ridges` is `position: fixed`, so anything below the hero scrolls
+through the ridge band.** The labels are `--ink-faint` by design and spent part
+of the scroll sitting on dark green hills. The hero survives on bare sky only
+because it is high enough to stay above the ridges; nothing below it can rely on
+that. Bare sky is a hero-only privilege on this page.
+
+**The part worth remembering: the contrast suite passed the whole time.** The
+probe composites ink over the *sky gradient* — `skyAt(fraction)` — and has no
+model of the ridge layer at all. It was not sampling a wrong value; it was
+confidently sampling the wrong background. A screenshot caught it, exactly as
+the note in the project's local notes says it will. This is the third time on this project
+that green has meant "the gate did not look" rather than "the design is sound".
+
+**Follow-up:** closed by D-041. The strip was subsequently moved back onto bare
+sky at the owner's direction, which made a ridge-aware gate mandatory rather
+than optional — `tests/ridge-contrast.spec.ts` now asks the ridge paths
+directly instead of modelling them.
+
+**Numbers are placeholders, and marked.** `src/data/stats.ts` carries
+`PROVISIONAL`, so `npm run content:status` lists it and the file blocks going
+public alongside the other invented copy. Numbers are the most damaging kind of
+placeholder: filler prose reads as filler, but a precise-looking figure reads as
+a claim.
+
+## D-040 — Headings are set open, not tight
+
+**The critique, from the owner:** the titles "look too compressed and too italic
+in some places."
+
+**Chosen:** neutral-to-open tracking on all headings, looser leading, and the
+one italic on the page removed.
+
+**What was actually causing it.** Three things compounding, none of them the
+typeface on its own:
+
+1. `h1` carried `letter-spacing: -.025em` and every heading `-.015em`. Instrument
+   Serif is already a narrow, high-contrast display face; negative tracking on
+   top of a condensed face is what reads as "compressed".
+2. `line-height: 1.06` closed up any heading that ran to two lines.
+3. **The reveal animation settled *into* the tight state.** `h1.reveal` animated
+   letter-spacing from `-.005em` to `-.025em`, so every heading visibly
+   compressed itself as it arrived. The motion was working against the
+   typography. It now resolves open — same designed settle, opposite direction.
+
+The italic was `.rotator` in the hero, the only italic on the site. At display
+size in a high-contrast serif it read as decorative rather than emphatic, and
+the accent colour was already doing the work of separating the role from the
+sentence. Now roman.
+
+**What this does not do.** If the titles still read too narrow, that is the
+typeface itself, and the fix is a wider display face — not more tracking.
+Instrument Serif is a condensed design and there is a floor to how open it can
+be made. Swapping it means a new self-hosted woff2 (`font-src 'self'`, D-018)
+and a pass through RUNBOOK § fonts; the italic `@font-face` is now unused but
+left declared, since an unreferenced `@font-face` never downloads.
+
+## D-041 — The near ridge is lightened so bare sky can carry small text
+
+**Chosen:** the stats strip moves out of the sheet onto bare sky, and day
+`--ridge-near` is lightened `#697F75` → `#7E948A` to make that legible.
+
+**Reason:** owner's direction, and it forced the honest version of D-039's
+problem. On bare sky the strip scrolls across the fixed ridge band. The labels
+are small mono text, so WCAG asks 4.5:1, and against the old near ridge even
+`--ink` — the darkest role in the palette — reached only **3.54:1**. No colour
+choice fixed it: there was nothing darker to reach for. Either the background
+moved or the strip went back in a box.
+
+**The options that were weighed:** a soft haze behind the strip (rejected — a
+surface behind text is the thing the owner asked to remove); accepting 3.54:1
+(rejected — the whole contrast suite exists to prevent exactly that, and passing
+it would have meant lowering the gate's own threshold); back on the sheet
+(rejected — it is the placement the owner ruled out).
+
+**The cost, stated plainly.** Near and mid hills now sit closer in tone, so the
+horizon reads slightly flatter. That is a real loss of depth, accepted
+deliberately in exchange for the placement. Night is untouched: its ridges are
+near-black under light ink and were never at risk.
+
+**The gate this required.** `tests/ridge-contrast.spec.ts`. It does not model the
+ridges — modelling is what failed in D-039. The bands are real SVG paths, so it
+asks them: `isPointInFill` returns the actual fill behind any sampled point, and
+screen→user mapping is a plain linear scale because the svg is
+`preserveAspectRatio="none"` over a fixed viewBox. It samples a grid across each
+glyph band at five scroll positions in both themes and takes the worst ratio.
+
+It was verified the only way a gate can be: **it failed first.** Before the
+palette change it reported all five labels at 3.54:1 against the 4.5:1 bar. A
+contrast gate that has never been seen to fail is not evidence of anything.
+
+## D-042 — Weight belongs to the numbers, and only the numbers
+
+**Chosen:** the stat values are set in Karla 600. Everything else keeps the
+weight it had; the hero's role line stays Instrument Serif at 400.
+
+**The constraint behind it:** Instrument Serif ships a single weight. There is
+no bold to ask for, and a synthetic bold smears a high-contrast serif badly at
+display size. So "make it bolder" is not a weight change on that face — it is a
+change of face, to the body sans at 600.
+
+**What was tried and reverted.** The hero's `and I do <role>` line was set in
+sans-semibold first, at the owner's request, then reverted at the owner's
+request once it was on screen. The reason it did not work is worth keeping: it
+put a second heavy element directly under the name and the two competed, and
+the accent colour was already doing the job of separating the role from the
+sentence around it. Weight is the loudest signal on this page and there is only
+enough room for one thing to use it.
+
+The numbers keep it because they are the one element whose entire purpose is to
+land in the first glance.
+
+## D-043 — The introduction and the numbers share the first screen
+
+**Chosen:** `.first-screen` wraps the hero and the stats strip at
+`min-height: calc(100svh - var(--bar-h) - 1px)`. The hero flexes to fill
+whatever the strip leaves, and every size in it is capped against viewport
+*height* as well as width.
+
+**Reason:** owner's direction — a statistic you have to scroll to find is not
+doing the job a statistic exists for.
+
+**Three things that make it work, none of them obvious.**
+
+1. **`svh`, not `vh`.** On mobile `vh` resolves against the largest viewport —
+   browser chrome retracted — so a `100vh` first screen is taller than what is
+   actually visible and pushes the strip under the fold on exactly the devices
+   where the fold is tightest.
+2. **`min-height`, not `height`.** On a viewport too short to hold both, the
+   block overflows and scrolls normally instead of clipping the numbers off.
+3. **Height-capped type.** `min(var(--step-4), 12vh)` and friends. Width-based
+   clamps have no idea the viewport is shallow, and a 768px-tall laptop is where
+   this breaks first.
+
+**`--bar-h` was wrong, and that is what the failures were pointing at.** Every
+viewport at or below 860px overflowed by *exactly* 5px — a constant, so not
+content. Below that width `.bar-inner` switches to `height: auto` with its own
+padding and wraps the nav onto a second row, measuring **102.5px** while the
+token still said `98px`. The token is not decoration: `[id]` scroll-margin
+clears it and `.first-screen` subtracts it, so understating it had also been
+landing every anchor jump ~5px under the header. Now `103px`. **If the bar's
+padding changes, this number has to move with it.**
+
+**A second bug the measuring caught.** The strip was never actually centred: the
+`.row` rule reset `margin: 0` for the list, and the scoped class outranks
+`.wrap`, so `margin-inline: auto` was being killed. It only looked centred at
+exactly `--wrap` width. Now `margin-block: 0` plus an explicit
+`margin-inline: auto`.
+
+**The gate:** `tests/first-screen.spec.ts`, across ten viewports from 1440x900
+to 360x740. It asserts the strip's bottom clears the fold, that the page is not
+scrolled, that stats actually rendered — and that `--bar-h` matches what `.bar`
+measures, so the token can never drift from the layout again.
+
+**Documented limit:** 320x568 and smaller are not covered and do not fit. With a
+103px header that leaves 465px for a portrait, a name, a role line, a paragraph,
+two buttons and five statistics. `min-height` means those viewports scroll
+rather than clip, which is the correct failure. Note also that the intro copy is
+still `PROVISIONAL` — it is the tallest element above the fold, so the real copy
+changes this budget in whichever direction it is written.

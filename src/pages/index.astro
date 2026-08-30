@@ -1,7 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import Hero from '../sections/Hero.astro';
-import Now from '../sections/Now.astro';
+import Stats from '../sections/Stats.astro';
 import Work from '../sections/Work.astro';
 import Experience from '../sections/Experience.astro';
 import Contact from '../sections/Contact.astro';
@@ -12,12 +12,20 @@ import { site } from '../data/site';
   title={`${site.name} — ${site.title}`}
   description={`Portfolio of ${site.name}, ${site.title.toLowerCase()} in ${site.location}. Work, experience and how to get in touch.`}
 >
-  <Hero />
+  <!-- Hero and stats share one screen: the numbers have to land in the first
+       glance, not one scroll later. The hero flexes to fill whatever the strip
+       leaves. Bare sky, outside the sheet — the strip crosses the fixed ridge
+       band, which is why its labels are --ink; see Stats.astro. -->
+  <div class="first-screen">
+    <Hero />
+    <Stats />
+  </div>
 
   <div class="sheet">
-    <Now />
-    <Work />
+    <!-- Experience before Work: the roles establish who is speaking, and the
+         projects then read as evidence rather than as a list of side work. -->
     <Experience />
+    <Work />
     <Contact />
   </div>
 </Base>
