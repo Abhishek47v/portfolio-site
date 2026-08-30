@@ -1,0 +1,22 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="Not found — Abhishek Verma" description="That page does not exist.">
+  <section class="wrap notfound" data-reveal>
+    <p class="label">404</p>
+    <h1>Nothing here</h1>
+    <p>That page does not exist. <a href="/">Back to the start</a>.</p>
+  </section>
+</Base>
+
+<style>
+  /* Not a .band — that class belongs to sections inside the sheet and brings
+     its own horizontal padding and hairline, neither of which applies here. */
+  .notfound {
+    padding-block: clamp(4rem, 14vh, 9rem);
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-4);
+  }
+</style>

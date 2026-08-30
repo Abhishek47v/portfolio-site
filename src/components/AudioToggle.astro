@@ -1,0 +1,92 @@
+---
+/**
+ * Opt-in audio (D-010). Off by default, never autoplayed, preference
+ * remembered, paused when the tab is hidden, and the file is not fetched until
+ * someone actually asks for it.
+ *
+ * Renders nothing unless the track actually exists in public/ at build time,
+ * so no dead control and no failing request ever ships. Drop the file in and
+ * it appears — see RUNBOOK.md § audio, and record the licence.
+ */
+import { site } from '../data/site';
+
+// The parent decides whether to render this at all — Astro hoists a
+// component's script whenever the component is used, so an internal guard
+// would still ship the JavaScript.
+const track = site.audio;
+---
+
+<button type="button" class="audio" data-audio={track} aria-pressed="false">
+  <span class="visually-hidden">Play ambient sound</span>
+  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <path d="M4 9v6h4l5 4V5L8 9Z" />
+    <path class="wave" d="M17 9.5a4 4 0 0 1 0 5M19.5 7a7.5 7.5 0 0 1 0 10" />
+  </svg>
+</button>
+
+<style>
+  .audio {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--edge);
+    border-radius: 999px;
+    color: var(--ink-soft);
+  }
+  .audio[aria-pressed='true'] { color: var(--accent); border-color: var(--accent); }
+  .audio svg {
+    width: 17px; height: 17px; fill: none; stroke: currentColor;
+    stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;
+  }
+  .audio[aria-pressed='false'] .wave { opacity: .3; }
+</style>
+
+<script>
+  const btn = document.querySelector<HTMLButtonElement>('[data-audio]');
+  if (btn) {
+    let el: HTMLAudioElement | null = null;
+
+    const unavailable = (): void => {
+      // No track uploaded yet. Say so rather than failing silently.
+      btn.setAttribute('aria-disabled', 'true');
+      btn.setAttribute('aria-pressed', 'false');
+      btn.title = 'No track loaded yet';
+    };
+
+    const start = (): void => {
+      // Fetched only on opt-in — never part of the initial payload.
+      if (!el) {
+        el = Object.assign(new Audio(btn.dataset.audio!), { loop: true, volume: 0.35 });
+        el.addEventListener('error', unavailable, { once: true });
+      }
+      el.play().then(
+        () => {
+          btn.setAttribute('aria-pressed', 'true');
+          try { localStorage.setItem('hours:audio', 'on'); } catch { /* storage blocked */ }
+        },
+        unavailable,
+      );
+    };
+
+    const stop = (): void => {
+      el?.pause();
+      btn.setAttribute('aria-pressed', 'false');
+      try { localStorage.setItem('hours:audio', 'off'); } catch { /* storage blocked */ }
+    };
+
+    btn.addEventListener('click', () => {
+      if (btn.getAttribute('aria-disabled') === 'true') return;
+      btn.getAttribute('aria-pressed') === 'true' ? stop() : start();
+    });
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) el?.pause();
+      else if (btn.getAttribute('aria-pressed') === 'true') void el?.play();
+    });
+
+    // No preference is restored on load: browsers require a gesture before
+    // audio can start, so a remembered 'on' cannot be honoured anyway. The
+    // stored value exists only so a future visit could offer to resume.
+  }
+</script>

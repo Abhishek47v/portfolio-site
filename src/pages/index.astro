@@ -1,0 +1,23 @@
+---
+import Base from '../layouts/Base.astro';
+import Hero from '../sections/Hero.astro';
+import Now from '../sections/Now.astro';
+import Work from '../sections/Work.astro';
+import Experience from '../sections/Experience.astro';
+import Contact from '../sections/Contact.astro';
+import { site } from '../data/site';
+---
+
+<Base
+  title={`${site.name} — ${site.title}`}
+  description={`Portfolio of ${site.name}, ${site.title.toLowerCase()} in ${site.location}. Work, experience and how to get in touch.`}
+>
+  <Hero />
+
+  <div class="sheet">
+    <Now />
+    <Work />
+    <Experience />
+    <Contact />
+  </div>
+</Base>

@@ -1,0 +1,161 @@
+---
+/**
+ * Sky — the page's ground. Static per theme (D-027): day and night are two
+ * authored palettes, not an inversion, and neither reacts to scroll.
+ *
+ * Everything here is decorative and CSS-driven. There is no JavaScript behind
+ * this component at all — visibility per theme is handled by tokens that
+ * resolve to `transparent` in the theme where an element does not belong.
+ *
+ * Stars and clouds are generated at build time from a fixed seed, so the sky
+ * is identical on every build and costs nothing at runtime.
+ *
+ * The orb is one disc — a sun by day, a full moon by night. The tokens decide
+ * which; the shape never changes.
+ */
+let seed = 20260830;
+function rand(): number {
+  seed = (seed * 1103515245 + 12345) % 2147483648;
+  return seed / 2147483648;
+}
+
+const stars = Array.from({ length: 64 }, () => ({
+  x: +(rand() * 100).toFixed(2),
+  y: +(rand() * 74).toFixed(2),
+  r: +(0.6 + rand() * 1.4).toFixed(2),
+  dur: +(3.5 + rand() * 4).toFixed(1),
+  delay: +(rand() * 6).toFixed(1),
+}));
+
+// Three, with durations that share no common factor, so they never fall into
+// step with each other and the sky does not develop a rhythm.
+const shootingStars = [
+  { top: '12%', left: '6%',  dur: 23, delay: 5 },
+  { top: '26%', left: '38%', dur: 41, delay: 19 },
+  { top: '8%',  left: '58%', dur: 67, delay: 34 },
+];
+
+const clouds = [
+  { top: '14%', scale: 1,    dur: 128, delay: -40 },
+  { top: '27%', scale: 0.72, dur: 173, delay: -95 },
+  { top: '20%', scale: 1.24, dur: 149, delay: -10 },
+];
+---
+
+<div class="sky" aria-hidden="true"></div>
+
+<svg class="stars" aria-hidden="true" focusable="false">
+  {stars.map((s) => (
+    <circle
+      cx={`${s.x}%`}
+      cy={`${s.y}%`}
+      r={s.r}
+      class="star u-twinkle"
+      style={`--twinkle-dur:${s.dur}s; animation-delay:${s.delay}s`}
+    />
+  ))}
+</svg>
+
+<div class="shooters" aria-hidden="true">
+  {shootingStars.map((s) => (
+    <i
+      class="shooter"
+      style={`top:${s.top}; left:${s.left}; --shoot-dur:${s.dur}s; animation-delay:${s.delay}s`}
+    />
+  ))}
+</div>
+
+<div class="clouds" aria-hidden="true">
+  {clouds.map((c) => (
+    <svg
+      class="cloud u-drift"
+      viewBox="0 0 220 70"
+      style={`top:${c.top}; --cloud-scale:${c.scale}; --drift-dur:${c.dur}s; animation-delay:${c.delay}s`}
+    >
+      <path d="M28 60 q-24 0-24-18 0-16 19-18 3-17 22-17 12 0 19 9 8-14 26-14 24 0 29 22 6-5 14-5 18 0 20 19 16 2 16 15 0 7-8 7Z" />
+    </svg>
+  ))}
+</div>
+
+<div class="orb" aria-hidden="true"></div>
+
+<style>
+  .sky {
+    position: fixed;
+    inset: 0;
+    z-index: -4;
+    background: linear-gradient(
+      to bottom,
+      var(--sky-high) 0%,
+      var(--sky-mid) 54%,
+      var(--sky-low) 100%
+    );
+  }
+
+  /* Stars, shooting stars and clouds each resolve to `transparent` in the
+     theme they do not belong to, so no script decides what is visible. */
+  .stars,
+  .shooters,
+  .clouds {
+    position: fixed;
+    inset: 0;
+    z-index: -3;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .star { fill: var(--star); }
+
+  .shooter {
+    position: absolute;
+    display: block;
+    width: 92px;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--star));
+    opacity: 0;
+    transform-origin: left center;
+    animation: shoot var(--shoot-dur, 30s) linear infinite;
+  }
+  .shooter::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: -1px;
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--star);
+  }
+
+  .cloud {
+    position: absolute;
+    left: 0;
+    width: clamp(140px, 17vw, 260px);
+    height: auto;
+    fill: var(--cloud);
+    scale: var(--cloud-scale, 1);
+  }
+
+  /* Fixed, always visible, and never animated (D-027). Sits high and to the
+     right, clear of the reading column at every breakpoint. */
+  .orb {
+    position: fixed;
+    top: clamp(88px, 16vh, 172px);
+    right: clamp(28px, 11vw, 190px);
+    z-index: -3;
+    width: clamp(52px, 6.5vw, 88px);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: var(--glow);
+    box-shadow: 0 0 100px 46px var(--glow);
+    pointer-events: none;
+  }
+
+  @media (max-width: 640px) {
+    .orb {
+      top: clamp(72px, 12vh, 120px);
+      right: clamp(18px, 8vw, 48px);
+    }
+  }
+</style>

@@ -1,0 +1,63 @@
+---
+import Plane from '../illustration/Plane.astro';
+import { site } from '../data/site';
+import { hasPublicFile } from '../lib/assets';
+
+const links = [
+  { label: 'Email', href: `mailto:${site.links.email}`, text: site.links.email },
+  { label: 'GitHub', href: site.links.github, text: 'Abhishek47v' },
+  { label: 'LinkedIn', href: site.links.linkedin, text: 'abhishek-v612' },
+  ...(hasPublicFile(site.links.resume)
+    ? [{ label: 'Résumé', href: site.links.resume, text: 'Download PDF' }]
+    : []),
+];
+---
+
+<section id="contact" class="band contact" data-section-name="Contact" aria-labelledby="contact-title">
+  <div class="head" data-reveal>
+    <div>
+      <p class="label">Contact</p>
+      <h2 id="contact-title">Let's talk</h2>
+      <p class="sub">
+        Email is the quickest way to reach me. I read everything and answer
+        anything that isn't a template.
+      </p>
+    </div>
+    <Plane />
+  </div>
+
+  <ul class="links">
+    {links.map((l) => (
+      <li>
+        <span class="label">{l.label}</span>
+        <a href={l.href}>{l.text}</a>
+      </li>
+    ))}
+  </ul>
+</section>
+
+<style>
+  .contact { --band: clamp(2.5rem, 6vw, 4.5rem); }
+  .head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--s-6);
+    margin-bottom: var(--s-6);
+  }
+  .head h2 { font-size: var(--step-3); margin: var(--s-2) 0 var(--s-3); }
+  .sub { color: var(--ink-soft); max-width: 34rem; }
+
+  .links {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: var(--s-5);
+    padding-top: var(--s-5);
+    border-top: 1px solid var(--edge);
+  }
+  .links li { display: flex; flex-direction: column; gap: 4px; max-width: none; }
+  .links a { font-size: 1.04rem; word-break: break-word; }
+</style>

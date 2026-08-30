@@ -1,0 +1,94 @@
+/* motion.css — every keyframe, and one place where motion reduces.
+   Reduced motion is a designed variant, not a kill switch (D-022). */
+
+@keyframes drift {
+  from { transform: translate3d(-8%, 0, 0); }
+  to   { transform: translate3d(108%, 0, 0); }
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: .45; }
+  50%      { opacity: 1; }
+}
+
+/* One quick streak, then a long wait. The visible portion is ~4% of the
+   cycle, so a 41s duration shows a streak lasting well under two seconds. */
+@keyframes shoot {
+  0%      { transform: translate3d(0, 0, 0) rotate(16deg); opacity: 0; }
+  0.6%    { opacity: 1; }
+  4%      { transform: translate3d(38vw, 22vh, 0) rotate(16deg); opacity: 0; }
+  100%    { transform: translate3d(38vw, 22vh, 0) rotate(16deg); opacity: 0; }
+}
+
+/* Staggered arrival. Blocks rise and settle; headings also resolve weight. */
+.reveal {
+  opacity: 0;
+  transform: translateY(10px);
+  transition:
+    opacity var(--dur) var(--ease),
+    transform var(--dur) var(--ease);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+.reveal.is-in { opacity: 1; transform: none; }
+
+/* Instrument Serif ships one weight, so headings settle by letter-spacing
+   rather than by axis — the same idea, done with what the face offers. */
+h1.reveal, h2.reveal {
+  letter-spacing: -.005em;
+  transition:
+    opacity var(--dur) var(--ease),
+    transform var(--dur) var(--ease),
+    letter-spacing 800ms var(--ease);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+h1.reveal.is-in, h2.reveal.is-in { letter-spacing: -.025em; }
+
+/* The rotating role line. */
+.rotator .word {
+  display: inline-block;
+  transition: opacity 320ms var(--ease), transform 320ms var(--ease);
+}
+.rotator.is-out .word { opacity: 0; transform: translateY(-6px); }
+
+/* The timeline draws itself once, when it comes into view. */
+.timeline-track {
+  transform: scaleY(0);
+  transform-origin: top center;
+  transition: transform 1200ms var(--ease);
+}
+.timeline.is-in .timeline-track { transform: scaleY(1); }
+
+.entry-dot {
+  transform: scale(0);
+  transition: transform 420ms var(--ease);
+  transition-delay: calc(var(--entry-index, 0) * 160ms + 240ms);
+}
+.timeline.is-in .entry-dot { transform: scale(1); }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+
+  /* Everything is already in place; nothing travels. */
+  .reveal,
+  h1.reveal, h2.reveal {
+    opacity: 1;
+    transform: none;
+    transition: opacity 200ms linear;
+    transition-delay: 0ms;
+    letter-spacing: -.025em;
+  }
+
+  /* The timeline is drawn, not animated into being. */
+  .timeline-track { transform: scaleY(1); transition: none; }
+  .entry-dot { transform: scale(1); transition: none; }
+  .rotator .word { transition: none; }
+
+  /* Ambient loops stop. The scene stays composed, it just holds still.
+     Shooting stars are removed rather than paused — a streak frozen
+     mid-flight would read as a rendering fault. */
+  .u-drift, .u-twinkle { animation: none !important; }
+  .shooter { display: none !important; }
+}
+
+.u-drift   { animation: drift var(--drift-dur, 130s) linear infinite; }
+.u-twinkle { animation: twinkle var(--twinkle-dur, 5s) ease-in-out infinite; }

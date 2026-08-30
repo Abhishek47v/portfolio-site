@@ -1,0 +1,60 @@
+---
+import { now } from '../data/now';
+
+const lines = [
+  { k: 'Building', v: now.building },
+  { k: 'Learning', v: now.learning },
+  { k: 'Focused on', v: now.focus },
+];
+const updated = new Date(now.updated).toLocaleDateString('en-GB', {
+  day: 'numeric', month: 'long', year: 'numeric',
+});
+---
+
+<section id="now" class="band now" data-section-name="Now" aria-labelledby="now-title">
+  <div class="row" data-reveal>
+    <div class="side">
+      <p class="label">Now</p>
+      <h2 id="now-title">Currently</h2>
+      <p class="stamp mono">Updated {updated}</p>
+    </div>
+    <dl class="lines">
+      {lines.map((l) => (
+        <div class="line">
+          <dt class="label">{l.k}</dt>
+          <dd>{l.v}</dd>
+        </div>
+      ))}
+    </dl>
+  </div>
+</section>
+
+<style>
+  /* Compact by design — this section earns its place by being short. */
+  .now { --band: clamp(2rem, 5vw, 3rem); }
+
+  .row {
+    display: grid;
+    grid-template-columns: minmax(0, 210px) minmax(0, 1fr);
+    gap: clamp(1.5rem, 5vw, 4rem);
+    align-items: start;
+  }
+  @media (max-width: 720px) { .row { grid-template-columns: 1fr; gap: var(--s-4); } }
+
+  .side { display: flex; flex-direction: column; gap: var(--s-2); }
+  .side h2 { font-size: var(--step-2); }
+  .stamp { font-size: .68rem; color: var(--ink-faint); margin-top: var(--s-1); }
+
+  .lines { margin: 0; display: flex; flex-direction: column; }
+  .line {
+    display: grid;
+    grid-template-columns: 116px minmax(0, 1fr);
+    gap: var(--s-4);
+    padding: var(--s-3) 0;
+    border-top: 1px solid var(--edge);
+    align-items: baseline;
+  }
+  .line:first-child { border-top: 0; padding-top: 0; }
+  .line dd { margin: 0; color: var(--ink-soft); }
+  @media (max-width: 560px) { .line { grid-template-columns: 1fr; gap: 2px; } }
+</style>

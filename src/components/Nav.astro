@@ -1,0 +1,45 @@
+---
+/**
+ * Section shortcuts. Real anchors, so they work with JavaScript off and can be
+ * copied and shared; the active state is the only scripted part.
+ */
+const items = [
+  { href: '#now', label: 'Now' },
+  { href: '#work', label: 'Work' },
+  { href: '#experience', label: 'Experience' },
+  { href: '#contact', label: 'Contact' },
+];
+---
+
+<nav class="nav" aria-label="Sections">
+  <ul>
+    {items.map((i) => (
+      <li><a href={i.href} data-nav={i.href.slice(1)}>{i.label}</a></li>
+    ))}
+  </ul>
+</nav>
+
+<style>
+  .nav ul {
+    display: flex;
+    gap: var(--s-5);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .nav a {
+    font-family: var(--font-mono);
+    font-size: .71rem;
+    letter-spacing: .11em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    text-decoration: none;
+    padding-bottom: 3px;
+    border-bottom: 1px solid transparent;
+    transition: color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+  }
+  .nav a:hover { color: var(--ink); }
+  .nav a.is-current { color: var(--ink); border-bottom-color: var(--accent); }
+
+  @media (max-width: 860px) { .nav { display: none; } }
+</style>

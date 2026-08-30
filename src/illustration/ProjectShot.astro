@@ -1,0 +1,55 @@
+---
+/**
+ * Placeholder for a project screenshot. Drawn, not a grey box — a real image
+ * drops into `image` in the project's frontmatter and this disappears.
+ * Deliberately abstract: it should read as "image pending", not as a design.
+ */
+interface Props { seed?: number }
+const { seed = 1 } = Astro.props;
+let n = seed * 9301 + 49297;
+const rand = () => ((n = (n * 9301 + 49297) % 233280) / 233280);
+const rows = Array.from({ length: 5 }, () => +(38 + rand() * 54).toFixed(0));
+---
+
+<div class="shot shot--placeholder" aria-hidden="true">
+  <svg viewBox="0 0 400 250" preserveAspectRatio="none">
+    <rect class="bg" x="0" y="0" width="400" height="250" />
+    <rect class="chrome" x="0" y="0" width="400" height="26" />
+    <circle class="dot" cx="16" cy="13" r="3.2" />
+    <circle class="dot" cx="28" cy="13" r="3.2" />
+    <circle class="dot" cx="40" cy="13" r="3.2" />
+    <rect class="block" x="22" y="48" width="120" height="9" rx="2" />
+    <rect class="block accent" x="22" y="68" width="66" height="9" rx="2" />
+    {rows.map((w, i) => (
+      <rect class="line" x="22" y={100 + i * 16} width={w * 2.4} height="5" rx="2" />
+    ))}
+    <rect class="panel" x="248" y="48" width="130" height="150" rx="3" />
+  </svg>
+  <p class="caption mono">screenshot pending</p>
+</div>
+
+<style>
+  .shot--placeholder { position: relative; }
+  svg {
+    width: 100%;
+    aspect-ratio: 8 / 5;
+    border: 1px solid var(--edge);
+    border-radius: 3px;
+  }
+  .bg { fill: var(--surface-strong); }
+  .chrome { fill: var(--sheet); }
+  .dot { fill: var(--edge); }
+  .block { fill: var(--ink-faint); opacity: .5; }
+  .block.accent { fill: var(--accent); opacity: .55; }
+  .line { fill: var(--ink-faint); opacity: .28; }
+  .panel { fill: var(--accent-soft); }
+  .caption {
+    position: absolute;
+    right: 10px;
+    bottom: 8px;
+    font-size: .6rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+</style>

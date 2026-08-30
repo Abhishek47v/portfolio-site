@@ -1,0 +1,42 @@
+---
+/**
+ * Ridges — the constant horizon. Three bands by default, two below 640px:
+ * three reads as clutter on a phone (04-experience.md §7).
+ * Static (D-027): no parallax, no scroll listener. Depth comes from layering
+ * and colour separation alone.
+ */
+---
+
+<svg
+  class="ridges"
+  aria-hidden="true"
+  focusable="false"
+  viewBox="0 0 1200 300"
+  preserveAspectRatio="none"
+>
+  <path class="r-far"  d="M0 148 q150-58 300-30 q170 32 330-22 q160-54 320-8 q140 40 250 12 v198 H0 Z" />
+  <path class="r-mid"  d="M0 200 q180-46 340-16 q180 34 340-18 q170-56 330-4 q110 36 190 14 v124 H0 Z" />
+  <path class="r-near" d="M0 248 q200-38 380-10 q200 30 400-16 q200-46 420 6 v72 H0 Z" />
+</svg>
+
+<style>
+  .ridges {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: -2;
+    width: 100%;
+    height: 34vh;
+    min-height: 190px;
+    pointer-events: none;
+  }
+  .r-far  { fill: var(--ridge-far); }
+  .r-mid  { fill: var(--ridge-mid); }
+  .r-near { fill: var(--ridge-near); }
+
+  @media (max-width: 640px) {
+    .r-far { display: none; }
+    .ridges { height: 26vh; min-height: 150px; }
+  }
+</style>

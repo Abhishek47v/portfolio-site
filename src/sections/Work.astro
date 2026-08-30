@@ -1,0 +1,38 @@
+---
+import { getCollection } from 'astro:content';
+import ProjectRow from '../components/ProjectRow.astro';
+
+const projects = (await getCollection('projects')).sort(
+  (a, b) => a.data.order - b.data.order,
+);
+---
+
+<section id="work" class="band work" data-section-name="Work" aria-labelledby="work-title">
+  <div class="band-head" data-reveal>
+    <p class="label">Work</p>
+    <h2 id="work-title">Things I've built</h2>
+  </div>
+
+  <div class="list">
+    {projects.map((p, i) => (
+      <ProjectRow
+        title={p.data.title}
+        year={p.data.year}
+        role={p.data.role}
+        oneLine={p.data.oneLine}
+        problem={p.data.problem}
+        stack={p.data.stack}
+        links={p.data.links}
+        image={p.data.image}
+        imageAlt={p.data.imageAlt}
+        index={i}
+      />
+    ))}
+  </div>
+</section>
+
+<style>
+  .work { --band: clamp(2.5rem, 6vw, 4.5rem); }
+  .work h2 { font-size: var(--step-3); }
+  .list { display: flex; flex-direction: column; }
+</style>

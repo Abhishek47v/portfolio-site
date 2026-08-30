@@ -1,0 +1,88 @@
+---
+import { site } from '../data/site';
+import { hasPublicFile } from '../lib/assets';
+
+const hasResume = hasPublicFile(site.links.resume);
+---
+
+<section class="hero" data-section-name="Intro" aria-labelledby="hero-name">
+  <div class="wrap inner" data-reveal>
+    <p class="greeting">Hey — I'm</p>
+    <h1 id="hero-name">{site.name}</h1>
+
+    <p class="doing">
+      <span class="and">and I do</span>
+      <span class="rotator" aria-hidden="true" data-roles={site.roles.join('|')}>
+        <span class="word">{site.roles[0]}</span>
+      </span>
+      <span class="visually-hidden">{site.roles.join(', ')}.</span>
+    </p>
+
+    <p class="intro">{site.intro}</p>
+
+    <p class="actions">
+      <a class="action action--primary" href="#work">See the work</a>
+      {hasResume && <a class="action" href={site.links.resume}>Résumé</a>}
+    </p>
+  </div>
+</section>
+
+<style>
+  /* No surface at all — the hero sits directly on the sky. At display sizes
+     the ink clears contrast against every sky stop, so a panel here would be
+     protecting text that does not need protecting (D-030). */
+  .hero { padding-block: clamp(4rem, 15vh, 9rem) clamp(3rem, 8vh, 6rem); }
+  .inner { display: flex; flex-direction: column; gap: var(--s-3); }
+
+  .greeting {
+    font-family: var(--font-mono);
+    font-size: .74rem;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  h1 { margin-bottom: var(--s-2); }
+
+  .doing {
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 1rem + 2.4vw, 2.6rem);
+    line-height: 1.25;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: .4em;
+  }
+  .and { color: var(--ink-soft); }
+  .rotator {
+    font-style: italic;
+    color: var(--accent);
+    /* Reserves the widest role so the line never reflows mid-swap. */
+    min-width: 10ch;
+  }
+
+  .intro {
+    margin-top: var(--s-4);
+    font-size: var(--step-1);
+    line-height: 1.55;
+    color: var(--ink-soft);
+    max-width: 34rem;
+  }
+
+  .actions { display: flex; flex-wrap: wrap; gap: var(--s-3); margin-top: var(--s-4); }
+  .action {
+    font-family: var(--font-mono);
+    font-size: .72rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    padding: 11px 20px;
+    border: 1px solid var(--edge);
+    border-radius: 999px;
+    text-decoration: none;
+    background: var(--surface);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: border-color var(--dur-fast) var(--ease);
+  }
+  .action:hover { border-color: var(--accent); }
+  .action--primary { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+</style>

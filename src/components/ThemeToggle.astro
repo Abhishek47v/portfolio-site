@@ -1,0 +1,79 @@
+---
+/**
+ * The theme control chooses which *day* you are visiting — light runs first
+ * light to last light, dark runs dusk to before dawn. Same sections, same
+ * geometry, a different range of hours (D-003).
+ */
+---
+
+<button type="button" class="toggle" data-theme-toggle aria-pressed="false">
+  <span class="visually-hidden">Switch between day and night</span>
+  <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <circle cx="12" cy="12" r="4.4" />
+    <path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.4 5.4 7 7M17 17l1.6 1.6M18.6 5.4 17 7M7 17l-1.6 1.6" />
+  </svg>
+  <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <path d="M20 14.4A8.4 8.4 0 0 1 9.6 4a8.4 8.4 0 1 0 10.4 10.4Z" />
+  </svg>
+</button>
+
+<style>
+  .toggle {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--edge);
+    border-radius: 999px;
+    color: var(--ink);
+    transition: border-color var(--dur-fast) var(--ease);
+  }
+  .toggle:hover { border-color: var(--accent); }
+  /* `hidden` is defined on HTMLElement, not SVGElement — setting it from
+     script silently does nothing. Visibility is a class instead. */
+  .i-moon { display: none; }
+  .toggle.is-dark .i-sun { display: none; }
+  .toggle.is-dark .i-moon { display: block; }
+
+  .toggle svg {
+    width: 17px;
+    height: 17px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+  }
+</style>
+
+<script>
+  const btn = document.querySelector<HTMLButtonElement>('[data-theme-toggle]');
+  const root = document.documentElement;
+
+  function dark(): boolean {
+    const attr = root.getAttribute('data-theme');
+    if (attr === 'dark') return true;
+    if (attr === 'light') return false;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+
+  function sync(): void {
+    const isDark = dark();
+    btn?.setAttribute('aria-pressed', String(isDark));
+    btn?.classList.toggle('is-dark', isDark);
+  }
+
+  btn?.addEventListener('click', () => {
+    const next = dark() ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('hours:theme', next); } catch { /* storage blocked */ }
+    sync();
+  });
+
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', sync);
+
+  // Keep the icon correct however the attribute changes — a click here, a
+  // preference restored before paint, or a tool setting it directly.
+  new MutationObserver(sync).observe(root, { attributeFilter: ['data-theme'] });
+
+  sync();
+</script>

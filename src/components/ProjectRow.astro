@@ -1,0 +1,90 @@
+---
+import ProjectShot from '../illustration/ProjectShot.astro';
+
+interface Props {
+  title: string;
+  year: number;
+  role: string;
+  oneLine: string;
+  problem: string;
+  stack: readonly string[];
+  links: { repo?: string; live?: string };
+  image?: string;
+  imageAlt?: string;
+  index: number;
+}
+const { title, year, role, oneLine, problem, stack, links, image, imageAlt, index } = Astro.props;
+---
+
+<article class="project" data-lit>
+  <div class="media">
+    {image
+      ? <img src={image} alt={imageAlt ?? `Screenshot of ${title}`} width="800" height="500" loading="lazy" decoding="async" />
+      : <ProjectShot seed={index + 1} />}
+  </div>
+
+  <div class="detail">
+    <p class="eyebrow mono">{year} · {role}</p>
+    <h3>{title}</h3>
+    <p class="one-line">{oneLine}</p>
+    <p class="problem">{problem}</p>
+
+    <ul class="chips">
+      {stack.map((s) => <li class="chip mono">{s}</li>)}
+    </ul>
+
+    {(links.live || links.repo) && (
+      <p class="links">
+        {links.live && <a class="visit" href={links.live}>Visit the site →</a>}
+        {links.repo && <a href={links.repo}>Source</a>}
+      </p>
+    )}
+  </div>
+</article>
+
+<style>
+  .project {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    gap: clamp(1.5rem, 4vw, 3.5rem);
+    align-items: center;
+    padding-block: clamp(2rem, 5vw, 3.5rem);
+    border-top: 1px solid var(--edge);
+  }
+  .project:first-of-type { border-top: 0; padding-top: 0; }
+
+  /* Alternating sides — the rhythm is what stops a list of projects reading
+     as a grid of identical cards. */
+  .project:nth-of-type(even) .media { order: 2; }
+
+  @media (max-width: 760px) {
+    .project { grid-template-columns: 1fr; gap: var(--s-5); }
+    .project:nth-of-type(even) .media { order: 0; }
+  }
+
+  .media img {
+    width: 100%;
+    height: auto;
+    border: 1px solid var(--edge);
+    border-radius: 3px;
+  }
+
+  .detail { display: flex; flex-direction: column; gap: var(--s-3); }
+  .eyebrow { font-size: .68rem; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-faint); }
+  .detail h3 { font-size: var(--step-2); }
+  .one-line { font-size: 1.06rem; }
+  .problem { color: var(--ink-soft); font-size: .96rem; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: var(--s-2); list-style: none; padding: 0; margin: var(--s-1) 0 0; }
+  .chip {
+    font-size: .66rem;
+    letter-spacing: .05em;
+    padding: 3px 9px;
+    border-radius: 2px;
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  .links { display: flex; flex-wrap: wrap; gap: var(--s-5); margin-top: var(--s-2); font-size: .95rem; }
+  .visit { color: var(--accent); text-decoration-color: var(--accent); }
+</style>

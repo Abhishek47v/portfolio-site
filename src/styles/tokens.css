@@ -1,0 +1,113 @@
+/* ============================================================
+   tokens.css — the single source of colour, type, space, motion.
+   No other file may contain a colour literal. Enforced by
+   scripts/check-tokens.mjs in CI (D-013).
+
+   The sky is static per theme (D-027). Day and night are two authored
+   palettes, not an inversion. Retuning either one happens here and
+   nowhere else — no script contains a colour.
+   ============================================================ */
+
+:root {
+  /* ---- the day sky: static. Colour intensity sits above and below the
+       reading band; behind the text it is at its palest. ---- */
+  --sky-high:#7FA3C4;
+  --sky-mid:#BCD2DF;
+  --sky-low:#E8EDEA;
+  --ridge-far:#AFC0BD;
+  --ridge-mid:#8DA298;
+  --ridge-near:#697F75;
+  --glow:#F6DFAE;              /* the sun */
+  --star:transparent;          /* stars and shooting stars — night only */
+  --cloud:rgba(255,255,255,.62); /* clouds — day only */
+
+
+  /* ---- surface & ink ---- */
+  --ink:#1C2730;
+  --ink-soft:#414D58;
+  --ink-faint:#59656F;
+  --surface:rgba(255,255,255,.74);     /* the veil — air, not a card */
+  --surface-strong:rgba(255,255,255,.86);
+  --sheet:rgba(255,255,255,.88);
+  --surface-solid:#EDF1F3;             /* no-JS / no-sky fallback ground */
+  --edge:rgba(28,39,48,.13);
+  --accent:#8A5E2A;
+  --accent-soft:rgba(138,94,42,.13);
+
+  /* ---- type ---- */
+  --font-display:"Instrument Serif","Iowan Old Style",Georgia,serif;
+  --font-body:"Karla",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+
+  --step-0:1.0625rem;
+  --step-1:1.24rem;
+  --step-2:clamp(1.45rem, 1.15rem + 1.3vw, 1.95rem);
+  --step-3:clamp(1.9rem, 1.4rem + 2.2vw, 2.75rem);
+  --step-4:clamp(3rem, 1.5rem + 6.6vw, 6.4rem);
+  --measure:64ch;
+
+  /* ---- space ---- */
+  --s-1:.25rem; --s-2:.5rem;  --s-3:.75rem; --s-4:1rem;
+  --s-5:1.5rem; --s-6:2.25rem; --s-7:3.5rem; --s-8:5.5rem;
+  --gutter:clamp(1.25rem, 4vw, 2rem);
+  --wrap:64rem;
+  --radius:4px;
+
+  /* ---- motion ---- */
+  --dur-fast:240ms;
+  --dur:600ms;
+  --ease:cubic-bezier(.22,.61,.36,1);
+}
+
+/* ---- night ---- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    /* ---- the night sky: static ---- */
+    --sky-high:#0C1424;
+    --sky-mid:#152238;
+    --sky-low:#28344A;
+    --ridge-far:#141F2E;
+    --ridge-mid:#0D1622;
+    --ridge-near:#070C14;
+    --glow:#E8EEF7;
+    --star:#E6EDF6;
+    --cloud:transparent;
+
+
+      --ink:#DDE5EC;
+    --ink-soft:#B3C0CC;
+    --ink-faint:#A4B1BE;
+    --surface:rgba(13,21,33,.74);
+    --surface-strong:rgba(13,21,33,.86);
+    --sheet:rgba(13,21,33,.88);
+    --surface-solid:#131E2E;
+    --edge:rgba(221,229,236,.14);
+    --accent:#D8AE72;
+    --accent-soft:rgba(216,174,114,.15);
+  }
+}
+
+:root[data-theme="dark"] {
+  /* ---- the night sky: static ---- */
+  --sky-high:#0C1424;
+  --sky-mid:#152238;
+  --sky-low:#28344A;
+  --ridge-far:#141F2E;
+  --ridge-mid:#0D1622;
+  --ridge-near:#070C14;
+  --glow:#E8EEF7;
+  --star:#E6EDF6;
+  --cloud:transparent;
+
+
+  --ink:#DDE5EC;
+  --ink-soft:#B3C0CC;
+  --ink-faint:#A4B1BE;
+  --surface:rgba(13,21,33,.74);
+  --surface-strong:rgba(13,21,33,.86);
+  --sheet:rgba(13,21,33,.88);
+  --surface-solid:#131E2E;
+  --edge:rgba(221,229,236,.14);
+  --accent:#D8AE72;
+  --accent-soft:rgba(216,174,114,.15);
+}

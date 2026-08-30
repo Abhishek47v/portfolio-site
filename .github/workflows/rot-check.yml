@@ -1,0 +1,20 @@
+# The realistic failure mode for this project is neglect, not traffic (D-019).
+# A monthly build on an untouched repository turns dependency rot into a red
+# email within a month, instead of an archaeology session in two years.
+name: rot-check
+
+on:
+  schedule:
+    - cron: '0 6 1 * *'   # 06:00 UTC, first of the month
+  workflow_dispatch:
+
+jobs:
+  build-from-cold:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+      - run: npm ci
+      - run: npm run build

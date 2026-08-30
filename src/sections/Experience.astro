@@ -1,0 +1,123 @@
+---
+import { getCollection } from 'astro:content';
+import { period } from '../lib/format';
+import { site } from '../data/site';
+
+const roles = (await getCollection('roles')).sort((a, b) => a.data.order - b.data.order);
+---
+
+<section id="experience" class="band exp" data-section-name="Experience" aria-labelledby="experience-title">
+  <div class="band-head" data-reveal>
+    <p class="label">Experience</p>
+    <h2 id="experience-title">The road so far</h2>
+  </div>
+
+  <ol class="timeline" data-timeline>
+    <span class="timeline-track" aria-hidden="true"></span>
+
+    {roles.map((r, i) => (
+      <li class="entry" style={`--entry-index:${i}`}>
+        <span class="entry-dot" aria-hidden="true"></span>
+        <p class="when mono tabular">{period(r.data.start, r.data.end)}</p>
+        <div class="what">
+          <h3>{r.data.title}</h3>
+          <p class="org">{r.data.org}</p>
+          <p class="one-line">{r.data.oneLine}</p>
+          <ul class="highlights">
+            {r.data.highlights.map((h) => <li>{h}</li>)}
+          </ul>
+          <ul class="chips">
+            {r.data.stack.map((s) => <li class="chip mono">{s}</li>)}
+          </ul>
+        </div>
+      </li>
+    ))}
+
+    <li class="entry entry--edu" style={`--entry-index:${roles.length}`}>
+      <span class="entry-dot" aria-hidden="true"></span>
+      <p class="when mono tabular">{site.education.period}</p>
+      <div class="what">
+        <h3>{site.education.degree}</h3>
+        <p class="org">{site.education.school}</p>
+      </div>
+    </li>
+  </ol>
+</section>
+
+<style>
+  .exp { --band: clamp(2.5rem, 6vw, 4.5rem); }
+  .exp h2 { font-size: var(--step-3); }
+
+  .timeline {
+    position: relative;
+    list-style: none;
+    margin: 0;
+    padding: 0 0 0 var(--s-6);
+  }
+
+  /* The rule draws itself downward once, when the timeline comes into view. */
+  .timeline-track {
+    position: absolute;
+    left: 5px;
+    top: 6px;
+    bottom: 6px;
+    width: 1px;
+    background: var(--edge);
+  }
+
+  .entry {
+    position: relative;
+    display: grid;
+    grid-template-columns: 168px minmax(0, 1fr);
+    gap: clamp(1rem, 3vw, 2.5rem);
+    padding-bottom: clamp(1.75rem, 4vw, 3rem);
+    max-width: none;
+  }
+  .entry:last-child { padding-bottom: 0; }
+  @media (max-width: 700px) {
+    .entry { grid-template-columns: 1fr; gap: var(--s-2); }
+  }
+
+  .entry-dot {
+    position: absolute;
+    left: calc(var(--s-6) * -1 + 1px);
+    top: 7px;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--sheet);
+    border: 1.5px solid var(--accent);
+  }
+  .entry--edu .entry-dot { border-color: var(--ink-faint); }
+
+  .when { font-size: .72rem; color: var(--ink-faint); padding-top: 4px; }
+  .what { display: flex; flex-direction: column; gap: var(--s-2); }
+  .what h3 { font-size: var(--step-1); }
+  .org {
+    font-family: var(--font-mono);
+    font-size: .74rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .one-line { color: var(--ink-soft); margin-top: var(--s-1); }
+
+  .highlights {
+    margin: var(--s-1) 0 0;
+    padding-left: var(--s-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-2);
+  }
+  .highlights li { color: var(--ink-soft); font-size: .95rem; max-width: none; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: var(--s-2); list-style: none; padding: 0; margin: var(--s-2) 0 0; }
+  .chip {
+    font-size: .66rem;
+    letter-spacing: .05em;
+    padding: 3px 9px;
+    border-radius: 2px;
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+</style>
