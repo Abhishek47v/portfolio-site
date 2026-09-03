@@ -14,3 +14,19 @@ const PUBLIC_DIR = fileURLToPath(new URL('../../public/', import.meta.url));
 export function hasPublicFile(path: string): boolean {
   return existsSync(PUBLIC_DIR + path.replace(/^\//, ''));
 }
+
+/**
+ * True when a link is worth rendering.
+ *
+ * A résumé now lives either in public/ or behind an external URL (Drive and
+ * the like), and the social links are external by definition. The rule is the
+ * same as hasPublicFile's: nothing renders until there is something real
+ * behind it, so an unfinished link is an absent control rather than a 404.
+ * An absolute URL is taken at face value — the build cannot check it, and a
+ * network request at build time to find out is not a trade worth making.
+ */
+export function hasLink(value: string | null | undefined): boolean {
+  if (!value) return false;
+  if (/^https?:\/\//i.test(value)) return true;
+  return hasPublicFile(value);
+}

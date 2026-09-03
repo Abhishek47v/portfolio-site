@@ -33,14 +33,27 @@ waiting on it. Use `npm run serve` instead. To stop a stray daemon:
 Self-hosted, latin subset only, no third-party origin (D-018). All three
 families are SIL Open Font License 1.1.
 
-| File | Axes | Size |
-|---|---|---|
-| `fraunces-300600.woff2` | `opsz` 9–144, `wght` 300–600 | 66 KB |
-| `karla-300600.woff2` | `wght` 300–600 | 31 KB |
-| `ibm-plex-mono-400.woff2` | static 400 | 10 KB |
+| File | Axes | Size | Used by |
+|---|---|---|---|
+| `karla-300600.woff2` | `wght` 300–600 | 31 KB | body text |
+| `karla-300600-italic.woff2` | `wght` 300–600, italic | 32 KB | Experience role titles (D-055) |
+| `instrument-serif-400.woff2` | static 400 | 15 KB | headings |
+| `instrument-serif-400-italic.woff2` | static 400, italic | 15 KB | **nothing — see below** |
+| `ibm-plex-mono-400.woff2` | static 400 | 10 KB | labels, chips, dates |
 
-**`SOFT` and `WONK` were deliberately dropped from Fraunces**: including them
-cost 52 KB — a quarter of the whole page budget — for one hover flourish.
+Fraunces was replaced by Instrument Serif in D-040 and its file is gone; this
+table said otherwise for some time.
+
+**`instrument-serif-400-italic.woff2` is declared in `fonts.css` and used by
+nothing.** D-040 removed the only italic it was for. `font-display: swap` means
+a declared-but-unused face is never fetched, so it costs a reader nothing — but
+it is 15 KB in the repo and in every deploy. Delete both the file and its
+`@font-face` when someone is sure nothing wants it back.
+
+**The role titles' italic is a real face, not a skew.** A synthesised oblique
+slants the roman outlines; the letterforms never change shape. If you ever drop
+`karla-300600-italic.woff2`, the titles will still *look* italic and will
+quietly be a fake (D-055).
 
 To regenerate: request the families from the Google Fonts CSS2 API with a modern
 browser user-agent, keep only the `U+0000-00FF` latin blocks, download each

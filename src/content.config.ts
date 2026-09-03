@@ -32,6 +32,12 @@ const projects = defineCollection({
     /** Path under /shots. Absent means the placeholder frame is drawn instead. */
     image: z.string().optional(),
     imageAlt: z.string().optional(),
+    /** Further shots beyond `image`. The control under the plate appears only
+     *  when a project actually has more than one, so a project with a single
+     *  screenshot shows no affordance at all (D-048). */
+    gallery: z
+      .array(z.object({ src: z.string(), alt: z.string() }))
+      .default([]),
     order: z.number().int().default(99),
     /** True while the copy is placeholder. `npm run content:status` lists these. */
     provisional: z.boolean().default(false),

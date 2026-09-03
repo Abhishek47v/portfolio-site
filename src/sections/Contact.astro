@@ -1,63 +1,339 @@
 ---
-import Plane from '../illustration/Plane.astro';
+/**
+ * Contact — the open line (D-051, amended by D-052).
+ *
+ * The last section is where the route ends. A thread enters from the sky above,
+ * wanders with a tapering amplitude, arrives, becomes the email address's rule
+ * and then breaks into dashes and stops at a marker that is deliberately
+ * incomplete. Hovering or focusing the address closes it. That is the only
+ * interaction here.
+ *
+ * It is the same line language as the Experience roadmap and it means the same
+ * thing: `rm-cap`'s dashes say "this comes from somewhere and carries on", and
+ * the one-word mono label that ended the road at `now` ends the page at `open`.
+ * With Experience directly above, the thread reads as that rail re-forming.
+ *
+ * **No panel and no cloud.** This section sits directly on the sky (D-053).
+ * That deleted the most fragile thing in it: when a sheet was here the thread
+ * had to pass *under* it as a drawn ghost, handed over by masks cut at the
+ * sheet's edge — and the cut landed well inside the panel, so a hard dark line
+ * ran down through the copy. With nothing to pass under, the line is simply
+ * continuous.
+ *
+ * The cost of having no cloud is that nothing here may be soft. Bare sky puts
+ * --ink-faint at 2.26:1 by day, so every label, the invitation and the links
+ * are --ink, and the hierarchy is carried by size, tracking and space instead
+ * of by lightness. tests/ridge-contrast.spec.ts gates all of it.
+ *
+ * Every word here is ordinary HTML. scripts/open-line.ts draws the thread after
+ * layout; with JavaScript off this is a heading, an invitation, an address and
+ * a list of links, and nothing is lost — the address simply carries its own
+ * underline again.
+ */
 import { site } from '../data/site';
-import { hasPublicFile } from '../lib/assets';
+import { hasLink } from '../lib/assets';
+
+/* A static site cannot send mail. With no endpoint configured the form still
+   renders — it is part of the composition — but it cannot submit and says so,
+   which is better than accepting a message and dropping it. */
+const endpoint = site.contact.endpoint;
+const live = hasLink(endpoint);
 
 const links = [
-  { label: 'Email', href: `mailto:${site.links.email}`, text: site.links.email },
   { label: 'GitHub', href: site.links.github, text: 'Abhishek47v' },
   { label: 'LinkedIn', href: site.links.linkedin, text: 'abhishek-v612' },
-  ...(hasPublicFile(site.links.resume)
-    ? [{ label: 'Résumé', href: site.links.resume, text: 'Download PDF' }]
-    : []),
-];
+  { label: 'LeetCode', href: site.links.leetcode, text: 'Profile' },
+  { label: 'Résumé', href: site.links.resume, text: 'Open PDF' },
+].filter((l) => hasLink(l.href));
 ---
 
-<section id="contact" class="band contact" data-section-name="Contact" aria-labelledby="contact-title">
-  <div class="head" data-reveal>
-    <div>
-      <p class="label">Contact</p>
-      <h2 id="contact-title">Let's talk</h2>
-      <p class="sub">
-        Email is the quickest way to reach me. I read everything and answer
-        anything that isn't a template.
-      </p>
+<section
+  id="contact"
+  class="band band--free contact"
+  data-section-name="Contact"
+  aria-labelledby="contact-title"
+  data-line
+>
+  <!-- Overflows upward on purpose: the thread has to be in the sky well before
+       it reaches the address. -->
+  <svg class="thread" data-thread aria-hidden="true" focusable="false"><g data-thread-layer></g></svg>
+
+  <div class="grid">
+    <div class="col">
+      <div class="band-head" data-reveal>
+        <p class="label">Contact</p>
+        <h2 id="contact-title">The line's still open</h2>
+        <p class="sub">Email is the quickest way to reach me.</p>
+      </div>
+
+      <div class="reach" data-reveal>
+        <p class="mail">
+          <a href={`mailto:${site.links.email}`} data-mail>{site.links.email}</a>
+        </p>
+
+        <ul class="links">
+          {links.map((l) => (
+            <li>
+              <span class="label">{l.label}</span>
+              <a href={l.href} target="_blank" rel="noopener">{l.text}</a>
+            </li>
+          ))}
+          <li>
+            <span class="label">Based in</span>
+            <span>{site.location}</span>
+          </li>
+        </ul>
+      </div>
     </div>
-    <Plane />
+
+    <!-- Real form, real POST. With JavaScript off it submits natively to the
+         provider; with it on, contact-form.ts keeps the reader on the page. -->
+    <form
+      class="form"
+      method="POST"
+      action={live ? endpoint : undefined}
+      data-contact-form
+      data-reveal
+    >
+      <p class="label form-head">Or send a message</p>
+
+      <p class="field">
+        <label for="cf-name">Name</label>
+        <input id="cf-name" name="name" type="text" autocomplete="name" required maxlength="80" />
+      </p>
+      <p class="field">
+        <label for="cf-email">Email</label>
+        <input id="cf-email" name="email" type="email" autocomplete="email" required maxlength="120" />
+      </p>
+      <p class="field">
+        <label for="cf-message">Message</label>
+        <textarea id="cf-message" name="message" rows="4" required maxlength="2000"></textarea>
+      </p>
+
+      <div class="form-foot">
+        <button class="action action--primary" type="submit" disabled={!live}>Send</button>
+        <!-- role=status, not an alert: a result the reader asked for should be
+             announced without interrupting them. -->
+        <span class="form-note mono" role="status" aria-live="polite" data-form-note>
+          {live ? '' : 'Not connected yet'}
+        </span>
+      </div>
+    </form>
   </div>
 
-  <ul class="links">
-    {links.map((l) => (
-      <li>
-        <span class="label">{l.label}</span>
-        <a href={l.href}>{l.text}</a>
-      </li>
-    ))}
-  </ul>
+  <!-- Real text, not SVG <text>: the ridge-contrast probe reads `color` off
+       DOM nodes, and a label it cannot measure is a label nothing is gating.
+       The script places it; without the script it never appears. -->
+  <span class="ol-open label" data-open-label>open</span>
 </section>
 
 <style>
-  .contact { --band: clamp(2.5rem, 6vw, 4.5rem); }
-  .head {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: var(--s-6);
-    margin-bottom: var(--s-6);
+  .contact {
+    --band: clamp(2.5rem, 6vw, 4.5rem);
+    position: relative;
   }
-  .head h2 { font-size: var(--step-3); margin: var(--s-2) 0 var(--s-3); }
-  .sub { color: var(--ink-soft); max-width: 34rem; }
+
+  .band-head h2 { font-size: var(--step-3); }
+
+  /* --ink, not --ink-soft. There is no cloud under this any more and bare sky
+     will not carry a softened tone (D-041). The paragraph reads as secondary
+     because of its size and measure, not its colour. */
+  .sub { color: var(--ink); max-width: 34rem; margin-top: var(--s-4); }
+
+  /* Same reason. The eyebrow and the link captions are the smallest text in
+     the section and have the least room to spare. */
+  .contact .label { color: var(--ink); }
+
+  /* The address and the links share one cloud: they are the section's payload,
+     and two clouds 40px apart read as two unrelated thoughts. */
+  .reach { margin-top: clamp(2.4rem, 5vw, 3.6rem); }
+
+  /* One column until there is room for two. The address column leads, because
+     it is the answer for most people; the form is for the ones who would
+     rather not open a mail client. */
+  .grid { display: grid; gap: clamp(2.5rem, 6vw, 4.5rem); }
+  @media (min-width: 900px) {
+    .grid { grid-template-columns: minmax(0, 1.02fr) minmax(0, .98fr); align-items: start; }
+  }
+
+  /* ---- the form ----
+     Ruled lines, not boxes. A field on this page is an underline and a label,
+     the same way every other line here is a line. */
+  .form { max-width: 30rem; }
+  .form-head { margin-bottom: var(--s-5); }
+
+  .field { display: flex; flex-direction: column; gap: 4px; margin: 0 0 var(--s-5); max-width: none; }
+  .field label {
+    font-family: var(--font-mono);
+    font-size: .66rem;
+    text-transform: uppercase;
+    letter-spacing: .17em;
+    color: var(--ink);
+  }
+  .field input,
+  .field textarea {
+    font: inherit;
+    color: var(--ink);
+    background: none;
+    border: 0;
+    border-bottom: 1px solid var(--ink-faint);
+    border-radius: 0;
+    padding: 6px 2px;
+    width: 100%;
+    transition: border-color var(--dur-fast) var(--ease);
+  }
+  .field textarea { resize: vertical; min-height: 5.5rem; line-height: 1.5; }
+  .field input:focus,
+  .field textarea:focus {
+    outline: none;
+    border-bottom-color: var(--accent);
+    border-bottom-width: 2px;
+    /* the border thickens, so hold the box height still */
+    padding-bottom: 5px;
+  }
+  /* The bottom rule is the only affordance, so it must not be the only focus
+     indicator too — keyboard users get the page's ring as well. */
+  .field input:focus-visible,
+  .field textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  .form-foot { display: flex; align-items: center; flex-wrap: wrap; gap: var(--s-4); }
+  .form-note { font-size: .68rem; letter-spacing: .08em; color: var(--ink); }
+  .form button[disabled] { opacity: .5; cursor: not-allowed; }
+  .form button[disabled]:hover { border-color: var(--accent); background: var(--accent); }
+
+  /* The line lands here, so this row owns the space the endpoint needs rather
+     than the endpoint being drawn into whatever gap is left over. */
+  .mail { margin: 0 0 clamp(3.4rem, 7vw, 5rem); max-width: none; }
+  .mail a {
+    /* The largest thing in the section after the heading. It is the one action
+       the whole page has been walking toward, so it is sized like it. */
+    font-size: clamp(1.32rem, .98rem + 1.15vw, 1.95rem);
+    line-height: 1.25;
+    letter-spacing: .004em;
+    word-break: break-word;
+  }
+  /* Only once the thread is actually drawn — with the script absent the
+     address keeps the underline every other link on the page has. */
+  [data-thread-ready] .mail a { text-decoration: none; }
+  .mail a:hover, .mail a:focus-visible { color: var(--accent); }
 
   .links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-4) var(--s-6);
     margin: 0;
     padding: 0;
     list-style: none;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: var(--s-5);
-    padding-top: var(--s-5);
-    border-top: 1px solid var(--edge);
   }
-  .links li { display: flex; flex-direction: column; gap: 4px; max-width: none; }
-  .links a { font-size: 1.04rem; word-break: break-word; }
+  .links li { display: flex; flex-direction: column; gap: 2px; max-width: none; }
+  .links a { font-size: 1.02rem; word-break: break-word; }
+
+  /* `open`, at the end of the line. --ink, not --ink-faint: this sits on bare
+     sky and crosses the fixed ridge band, where --ink-faint measures 2.26:1 by
+     day. Small text out here has no softer option (D-041). */
+  .ol-open {
+    position: absolute;
+    display: none;
+    color: var(--ink);
+    opacity: .85;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  [data-thread-ready] .ol-open { display: block; }
+
+  /* ---- the thread ----
+     :global on every one of these. Astro scopes component CSS with a build-time
+     data attribute and open-line.ts creates these elements at runtime, so they
+     never carry it and a scoped selector simply does not match them. Without
+     it the paths fall back to the SVG default of black fill and no stroke —
+     the same failure that rendered the Experience rail as a solid blob
+     (D-046). */
+  .thread {
+    position: absolute;
+    left: 0;
+    right: 0;
+    /* set by the script: how far above the section the line enters */
+    top: calc(-1 * var(--lead, 260px));
+    bottom: 0;
+    width: 100%;
+    z-index: 1;
+    overflow: visible;
+    pointer-events: none;
+  }
+  .thread :global(path), .thread :global(circle) { fill: none; }
+
+  /* Arrives already in motion — the roadmap's dashes, re-forming. */
+  .thread :global(.ol-cap) {
+    stroke: var(--ink-faint);
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-dasharray: 3 7;
+    opacity: .6;
+    -webkit-mask-image: linear-gradient(to bottom, transparent, currentColor);
+    mask-image: linear-gradient(to bottom, transparent, currentColor);
+    animation: ol-fade 700ms var(--ease) both;
+  }
+
+  /* One stroke from the sky to the end of the address's rule. There is no
+     panel to pass under any more, so there is no mask, no ghost and no cut —
+     the three things that were making this section fragile. */
+  .thread :global(.ol-route) {
+    stroke: var(--ink-faint);
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: .78;
+    animation: ol-draw 1600ms var(--ease) both;
+  }
+
+  /* Past the address it breaks back into dashes and drifts off. */
+  .thread :global(.ol-tail) {
+    stroke: var(--ink-faint);
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-dasharray: 3 7;
+    opacity: .62;
+    -webkit-mask-image: linear-gradient(to right, currentColor 40%, transparent);
+    mask-image: linear-gradient(to right, currentColor 40%, transparent);
+    animation: ol-fade 700ms var(--ease) 1500ms both;
+    transition: opacity var(--dur-fast) var(--ease);
+  }
+  .thread.is-linked :global(.ol-tail) { opacity: .9; }
+
+  /* The ring that is not closed. Reaching for the address closes it, and only
+     then does it take the accent — the connection is the accent moment.
+     --ink while open because --accent on the near ridge by day is far too weak
+     for a mark this small to survive out here. */
+  .thread :global(.ol-ring) {
+    stroke: var(--ink);
+    stroke-width: 1.5;
+    stroke-dasharray: 72 28;
+    stroke-dashoffset: 86;
+    opacity: .8;
+    animation: ol-fade 700ms var(--ease) 1700ms both;
+    transition: stroke-dasharray 420ms var(--ease), stroke-dashoffset 420ms var(--ease),
+      stroke var(--dur-fast) var(--ease), opacity var(--dur-fast) var(--ease);
+  }
+  .thread.is-linked :global(.ol-ring) {
+    stroke: var(--accent);
+    stroke-dasharray: 100 0;
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+
+  @keyframes ol-draw { from { stroke-dashoffset: var(--len); } }
+  @keyframes ol-fade { from { opacity: 0; } }
+
+  /* Reduced motion is a variant, not a kill switch: the line is simply already
+     drawn, and the ring still closes — it just does not travel to get there. */
+  @media (prefers-reduced-motion: reduce) {
+    .thread :global(.ol-route) { animation: none; stroke-dasharray: none; }
+    .thread :global(.ol-cap), .thread :global(.ol-tail),
+    .thread :global(.ol-ring) { animation: none; }
+    .thread :global(.ol-ring) { transition: stroke var(--dur-fast) var(--ease); }
+  }
+
+  @media (max-width: 760px) {
+    .mail { margin-bottom: clamp(2.4rem, 8vw, 3rem); }
+  }
 </style>

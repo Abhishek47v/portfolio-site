@@ -7,16 +7,16 @@
  * order is the argument: introduction, then evidence, then the invitation —
  * asking someone to look at the work before showing them any reason to is the
  * wrong way round.
+ *
+ * It carries one control, not two. The résumé used to sit beside it; there are
+ * now résumé buttons in the header and in the hero's link row, and a third
+ * copy of the same link 200px below the second is noise rather than emphasis.
+ * `.action` lives in base.css because the hero uses it too.
  */
-import { site } from '../data/site';
-import { hasPublicFile } from '../lib/assets';
-
-const hasResume = hasPublicFile(site.links.resume);
 ---
 
 <p class="actions">
   <a class="action action--primary" href="#work">See my works</a>
-  {hasResume && <a class="action" href={site.links.resume}>Résumé</a>}
 </p>
 
 <style>
@@ -35,34 +35,6 @@ const hasResume = hasPublicFile(site.links.resume);
     /* This is the last element on the first screen, so its bottom padding
        is the difference between the button clearing the fold and hanging off
        it. Trimmed to what the fold budget actually allows. */
-    padding-bottom: clamp(.7rem, 2.3vh, 1.6rem);
+    padding-bottom: clamp(.5rem, 1.3vh, 1.5rem);
   }
-  .action {
-    font-family: var(--font-mono);
-    font-size: .72rem;
-    letter-spacing: .1em;
-    text-transform: uppercase;
-    padding: 11px 20px;
-    border: 1px solid var(--edge);
-    border-radius: 999px;
-    text-decoration: none;
-    background: var(--surface);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    transition: border-color var(--dur-fast) var(--ease);
-  }
-  .action:hover { border-color: var(--accent); }
-
-  /* Solid, not a tinted veil. --accent-soft is 13% alpha by day, so the button
-     was a faint outline over whatever sky or ridge happened to be behind it —
-     and being the last element on the first screen, it usually sat over the
-     hills. A solid fill is legible against all of them, and it is the only
-     element on the page asking to be clicked, so it should look like it. */
-  .action--primary {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: var(--on-accent);
-    font-weight: 500;
-  }
-  .action--primary:hover { background: var(--ink); border-color: var(--ink); }
 </style>

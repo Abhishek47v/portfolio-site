@@ -73,8 +73,21 @@ const probe = `(() => {
   const ratio = (a, b) => { const l1 = lum(a), l2 = lum(b); const hi = Math.max(l1, l2), lo = Math.min(l1, l2); return (hi + 0.05) / (lo + 0.05); };
 
   // Every surface that carries text.
+  //
+  // .work .page is here because the book's two pages are the only ground
+  // the Work section provides — the section itself is transparent (D-047).
+  // .project .detail went with the old row layout.
+  // .rm-cloud is here because the Experience roadmap floats outside the sheet
+  // (D-046): its text sits on clouds of --sheet over bare sky, and a gate that
+  // cannot see the surface it is judging is worse than no gate (D-029).
+  // .band--free is not sampled: every section carries it now, and none of them
+  // has a ground of its own -- only the clouds inside them do. Sampling the
+  // band would measure a surface nothing is written on.
+  //
+  // No backticks in here: this whole probe is a template literal, and one
+  // backtick in a comment ends the string.
   const targets = Array.from(document.querySelectorAll(
-    '.band, .hero .inner, .bar-inner, .colophon, .project .detail'
+    '.rm-cloud, .work .page, .hero .inner, .bar-inner'
   ));
   const results = [];
   for (const el of targets) {

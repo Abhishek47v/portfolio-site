@@ -12,7 +12,10 @@
  */
 import { reveal } from './reveal';
 import { currentSection } from './nav';
-import { drawTimeline } from './timeline';
+import { roadmap } from './roadmap';
+import { shelf } from './shelf';
+import { openLine } from './open-line';
+import { contactForm } from './contact-form';
 import { pointerLight } from './pointer-light';
 import { rotate } from './rotator';
 import { character } from './character';
@@ -21,7 +24,10 @@ const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 reveal(reduce);
 currentSection();
-drawTimeline();
+roadmap();
+shelf(reduce);
+openLine();
+contactForm();
 pointerLight(reduce);
 rotate(reduce);
 character(reduce);

@@ -13,6 +13,25 @@ const ROOT = new URL('..', import.meta.url).pathname;
 const DIST = join(ROOT, 'dist');
 const TEMPLATE = join(ROOT, 'public', '_headers');
 const PLACEHOLDER = '{{SCRIPT_HASHES}}';
+const FORM_PLACEHOLDER = '{{FORM_ORIGIN}}';
+
+/* The contact form posts to a third-party endpoint, and `form-action 'none'`
+   would block it silently. Rather than widening the policy by hand — and
+   leaving it wide when the endpoint changes — the origin is read from the one
+   place it is configured. No endpoint, no extra origin: the policy stays shut.
+   Read by regex because this is plain Node and site.ts is TypeScript; it is a
+   URL, not a secret, and the alternative is a build step to learn one string. */
+function formOrigin() {
+  const src = readFileSync(join(ROOT, 'src', 'data', 'site.ts'), 'utf8');
+  const match = src.match(/endpoint:\s*'([^']*)'/);
+  if (!match || !match[1]) return '';
+  try {
+    return ' ' + new URL(match[1]).origin;
+  } catch {
+    console.error(`csp: contact.endpoint is not a valid URL: ${match[1]}`);
+    process.exit(1);
+  }
+}
 
 function html(dir) {
   const out = [];
@@ -42,5 +61,12 @@ if (!template.includes(PLACEHOLDER)) {
   process.exit(1);
 }
 
-writeFileSync(join(DIST, '_headers'), template.replace(PLACEHOLDER, [...hashes].join(' ')));
-console.log(`csp: ${hashes.size} inline script hash(es) written to dist/_headers`);
+const origin = formOrigin();
+writeFileSync(
+  join(DIST, '_headers'),
+  template.replace(PLACEHOLDER, [...hashes].join(' ')).replaceAll(FORM_PLACEHOLDER, origin),
+);
+console.log(
+  `csp: ${hashes.size} inline script hash(es) written to dist/_headers` +
+    (origin ? `, form origin${origin}` : ', no form origin'),
+);

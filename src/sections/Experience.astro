@@ -1,27 +1,100 @@
 ---
+/**
+ * Experience — a roadmap, not a timeline (D-046).
+ *
+ * A wandering rail runs down the section with each role placed along it. The
+ * whole description sits *on* the map beside its own stop: no hover, no panel,
+ * no second place to look. That is why this section is the one thing on the
+ * page outside the sheet — it floats on the sky, and the sheet begins at Work.
+ *
+ * Every block's text is ordinary HTML. The rail is drawn by scripts/roadmap.ts
+ * after layout; with JavaScript off this is a correctly ordered list of roles
+ * and nothing is lost.
+ */
 import { getCollection } from 'astro:content';
 import { period } from '../lib/format';
 import { site } from '../data/site';
 
 const roles = (await getCollection('roles')).sort((a, b) => a.data.order - b.data.order);
+
+/* Earliest first. A journey reads forward; a résumé reads backward. The
+   metaphor wins here because the rail only means anything travelled in one
+   direction — and "now" has to be the end of the line, not the start. */
+const journey = [...roles].reverse();
+
+/* The gap before a role stands for the months since the previous one ended —
+   an authored floor plus elapsed time, capped so a long pause cannot push the
+   next block off the screen. This is the honest half of "distance is time":
+   the relative gaps are true even though pixels-per-month is not constant once
+   the descriptions set the rhythm (D-046).
+
+   The growth is sub-linear, not proportional. A two-month job followed by a
+   seventeen-month pause put 227px of empty sky in the middle of a three-stop
+   road, and the road then read as being mostly about the gap. Under the square
+   root that pause is 129px: still visibly the longest, still ordered correctly
+   against every other gap, but no longer the largest single element in the
+   section. Ordinal truth is what a roadmap needs; a scale bar is what it
+   does not have (D-049). */
+function gapBefore(i: number): number {
+  if (i === 0) return 0;
+  const prev = journey[i - 1].data;
+  const cur = journey[i].data;
+  if (!prev.end) return 30;
+  const [py, pm] = prev.end.split('-').map(Number);
+  const [cy, cm] = cur.start.split('-').map(Number);
+  const months = Math.max(0, (cy - py) * 12 + (cm - pm));
+  return Math.min(30 + Math.round(24 * Math.sqrt(months)), 150);
+}
+
+const edu = site.education;
+/* "2021 — 2025" → the year the degree ended, for the education rail's end cap. */
+const eduEnd = `${edu.period.split('—').pop()!.trim()}-06`;
 ---
 
-<section id="experience" class="band exp" data-section-name="Experience" aria-labelledby="experience-title">
-  <div class="band-head" data-reveal>
-    <p class="label">Experience</p>
+<section
+  id="experience"
+  class="band band--free exp"
+  data-section-name="Experience & Education"
+  aria-labelledby="experience-title"
+>
+  <div class="band-head rm-cloud" data-reveal>
+    <p class="label">Experience &amp; Education</p>
     <h2 id="experience-title">The road so far</h2>
   </div>
 
-  <ol class="timeline" data-timeline>
-    <span class="timeline-track" aria-hidden="true"></span>
+  <div class="roadmap" data-roadmap>
+    <svg class="rail" data-rail aria-hidden="true" focusable="false">
+      <g data-rail-layer></g>
+    </svg>
 
-    {roles.map((r, i) => (
-      <li class="entry" style={`--entry-index:${i}`}>
-        <span class="entry-dot" aria-hidden="true"></span>
-        <p class="when mono tabular">{period(r.data.start, r.data.end)}</p>
-        <div class="what">
-          <h3>{r.data.title}</h3>
+    <ol class="stops">
+      <li
+        class="stop rm-cloud stop--right stop--edu"
+        data-stop="education"
+        data-kind="edu"
+        data-side="right"
+        data-end={eduEnd}
+      >
+        <span class="anchor" data-anchor></span>
+        <p class="when mono tabular">{edu.period}</p>
+        <p class="org">{edu.school}</p>
+        <h3>{edu.degree}</h3>
+      </li>
+
+      {journey.map((r, i) => (
+        <li
+          class:list={['stop', 'rm-cloud', i % 2 === 0 ? 'stop--left' : 'stop--right']}
+          style={`margin-top:${gapBefore(i)}px`}
+          data-stop={r.id}
+          data-side={i % 2 === 0 ? 'left' : 'right'}
+          data-start={r.data.start}
+          data-end={r.data.end ?? ''}
+          tabindex="0"
+        >
+          <span class="anchor" data-anchor></span>
+          <p class="when mono tabular">{period(r.data.start, r.data.end)}</p>
           <p class="org">{r.data.org}</p>
+          <h3>{r.data.title}</h3>
           <p class="one-line">{r.data.oneLine}</p>
           <ul class="highlights">
             {r.data.highlights.map((h) => <li>{h}</li>)}
@@ -29,81 +102,188 @@ const roles = (await getCollection('roles')).sort((a, b) => a.data.order - b.dat
           <ul class="chips">
             {r.data.stack.map((s) => <li class="chip mono">{s}</li>)}
           </ul>
-        </div>
-      </li>
-    ))}
-
-    <li class="entry entry--edu" style={`--entry-index:${roles.length}`}>
-      <span class="entry-dot" aria-hidden="true"></span>
-      <p class="when mono tabular">{site.education.period}</p>
-      <div class="what">
-        <h3>{site.education.degree}</h3>
-        <p class="org">{site.education.school}</p>
-      </div>
-    </li>
-  </ol>
+        </li>
+      ))}
+    </ol>
+  </div>
 </section>
 
 <style>
   .exp { --band: clamp(2.5rem, 6vw, 4.5rem); }
-  .exp h2 { font-size: var(--step-3); }
 
-  .timeline {
-    position: relative;
+  /* The trailing room is padding on the container, not a spacer element: the
+     rail has to run past the last stop, reach `now` and dissolve, and on a
+     phone the final block is full width so there is nowhere else for it to go. */
+  .roadmap { position: relative; padding-bottom: 130px; }
+
+  .rail {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: visible;
+  }
+
+
+  /* ---- the rail ----
+     :global on every one of these. Astro scopes component CSS with a build-time
+     data attribute, and roadmap.ts creates these elements at runtime, so they
+     never carry it — scoped selectors simply do not match them. Without this
+     the paths fall back to the SVG default of black fill and no stroke, which
+     renders the whole route as a solid blob. */
+  .rail :global(.rm-route) {
+    fill: none;
+    stroke: var(--ink-faint);
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: .72;
+  }
+  /* The line arrives from somewhere: the top end breaks into dashes and
+     dissolves. There is no bottom cap — Contact's thread continues the rail
+     from the `now` marker itself (D-053). */
+  .rail :global(.rm-cap) {
+    fill: none;
+    stroke: var(--ink-faint);
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-dasharray: 3 7;
+    opacity: .6;
+  }
+  .rail :global(.rm-cap--top) {
+    -webkit-mask-image: linear-gradient(to bottom, transparent, currentColor);
+    mask-image: linear-gradient(to bottom, transparent, currentColor);
+  }
+
+  /* One overlay per role: the stretch of rail that role occupied. */
+  .rail :global(.rm-span) {
+    fill: none;
+    stroke: var(--ink-soft);
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    opacity: .6;
+    transition: stroke var(--dur-fast) var(--ease), opacity var(--dur-fast) var(--ease),
+      stroke-width var(--dur-fast) var(--ease);
+  }
+  .rail :global(.rm-span.is-on) { opacity: 1; stroke: var(--accent); stroke-width: 4; }
+
+  /* Education is a duration, so it runs alongside rather than being a stop. */
+  .rail :global(.rm-edu) {
+    fill: none;
+    stroke: var(--ink-faint);
+    stroke-width: 1;
+    stroke-dasharray: 2 5;
+    opacity: .5;
+  }
+  .rail :global(.rm-edu-cap) { stroke: var(--ink-faint); stroke-width: 1; opacity: .5; }
+
+  .rail :global(.rm-leader) {
+    stroke: var(--ink-faint);
+    stroke-width: 1;
+    opacity: .3;
+    transition: stroke var(--dur-fast) var(--ease), opacity var(--dur-fast) var(--ease);
+  }
+  .rail :global(.rm-leader.is-on) { stroke: var(--accent); opacity: .6; }
+
+  /* The same marker the old timeline used: sheet fill, accent ring. */
+  .rail :global(.rm-ring) {
+    fill: var(--sheet);
+    stroke: var(--accent);
+    stroke-width: 1.5;
+    transition: fill var(--dur-fast) var(--ease);
+  }
+  .rail :global(.rm-ring.is-on) { fill: var(--accent); }
+  .rail :global(.rm-ring--edu) { stroke: var(--ink-faint); }
+
+  .rail :global(.rm-halo) {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 1;
+    opacity: 0;
+    transition: opacity var(--dur-fast) var(--ease);
+  }
+  .rail :global(.rm-halo.is-on) { opacity: .34; }
+
+  .rail :global(.rm-now) { fill: none; stroke: var(--ink-faint); stroke-width: 1; opacity: .5; }
+  .rail :global(.rm-now-label) {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    fill: var(--ink-faint);
+    opacity: .85;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .rail :global(.rm-span), .rail :global(.rm-leader),
+    .rail :global(.rm-ring), .rail :global(.rm-halo) { transition: none; }
+  }
+
+
+
+  /* Narrower than the band so the two columns sit close to the rail rather
+     than at the section's outer edges. The rail measures these positions at
+     runtime, so this width is the single place the spacing is decided. */
+  .stops {
     list-style: none;
-    margin: 0;
-    padding: 0 0 0 var(--s-6);
+    margin-block: 0;
+    margin-inline: auto;
+    padding: 0;
+    width: 100%;
+    max-width: 51rem;
+    display: flex;
+    flex-direction: column;
   }
 
-  /* The rule draws itself downward once, when the timeline comes into view. */
-  .timeline-track {
-    position: absolute;
-    left: 5px;
-    top: 6px;
-    bottom: 6px;
-    width: 1px;
-    background: var(--edge);
+  /* The text column. The rail wanders in the channel between the two columns,
+     and may cross a cloud's soft edge — only the glyphs are kept clear. */
+  .stop {
+    width: min(46%, 330px);
   }
+  .stop--left { align-self: flex-start; }
+  .stop--right { align-self: flex-end; }
+  .stop:focus-visible { outline: 2px solid var(--accent); outline-offset: 6px; }
 
-  .entry {
-    position: relative;
-    display: grid;
-    grid-template-columns: 168px minmax(0, 1fr);
-    gap: clamp(1rem, 3vw, 2.5rem);
-    padding-bottom: clamp(1.75rem, 4vw, 3rem);
-    max-width: none;
-  }
-  .entry:last-child { padding-bottom: 0; }
-  @media (max-width: 700px) {
-    .entry { grid-template-columns: 1fr; gap: var(--s-2); }
-  }
+  .anchor { display: block; height: 1px; }
 
-  .entry-dot {
-    position: absolute;
-    left: calc(var(--s-6) * -1 + 1px);
-    top: 7px;
-    width: 9px;
-    height: 9px;
-    border-radius: 50%;
-    background: var(--sheet);
-    border: 1.5px solid var(--accent);
-  }
-  .entry--edu .entry-dot { border-color: var(--ink-faint); }
-
-  .when { font-size: .72rem; color: var(--ink-faint); padding-top: 4px; }
-  .what { display: flex; flex-direction: column; gap: var(--s-2); }
-  .what h3 { font-size: var(--step-1); }
+  .when { font-size: .72rem; color: var(--ink-faint); }
   .org {
     font-family: var(--font-mono);
     font-size: .74rem;
     letter-spacing: .1em;
     text-transform: uppercase;
     color: var(--accent);
+    margin-top: var(--s-2);
   }
-  .one-line { color: var(--ink-soft); margin-top: var(--s-1); }
+  /* The one heading on the site set in the body face, and the one place
+     besides the stat numbers carrying weight (D-042 amended by D-049). At
+     1.24rem Instrument Serif is doing display work at reading size: it is
+     narrow, high-contrast and calligraphic enough to read as italic even
+     though it is not, and the job title is the single thing in the block a
+     skimming reader is looking for. Karla 600 is legible and unmistakably
+     emphatic; the display face stays on the section heading above.
+
+     Italic *and* 600: the title is the one line in each block a skimming reader
+     is hunting for, and the two together separate it from the mono organisation
+     above it and the roman prose below without changing its size. This is the
+     one italic on the site — D-040 removed the last one, which was Instrument
+     Serif at display size and read as a flourish; this is a sans at reading
+     size and reads as emphasis. */
+  .stop h3 {
+    font-family: var(--font-body);
+    font-weight: 600;
+    /* A real face, not a skew — fonts.css carries Karla's italic (D-055). */
+    font-style: italic;
+    font-size: 1.1rem;
+    line-height: 1.34;
+    letter-spacing: .002em;
+    margin-top: var(--s-1);
+  }
+  .one-line { color: var(--ink-soft); margin-top: var(--s-3); }
 
   .highlights {
-    margin: var(--s-1) 0 0;
+    margin: var(--s-4) 0 0;
     padding-left: var(--s-4);
     display: flex;
     flex-direction: column;
@@ -111,7 +291,7 @@ const roles = (await getCollection('roles')).sort((a, b) => a.data.order - b.dat
   }
   .highlights li { color: var(--ink-soft); font-size: .95rem; max-width: none; }
 
-  .chips { display: flex; flex-wrap: wrap; gap: var(--s-2); list-style: none; padding: 0; margin: var(--s-2) 0 0; }
+  .chips { display: flex; flex-wrap: wrap; gap: var(--s-2); list-style: none; padding: 0; margin: var(--s-4) 0 0; }
   .chip {
     font-size: .66rem;
     letter-spacing: .05em;
@@ -119,5 +299,23 @@ const roles = (await getCollection('roles')).sort((a, b) => a.data.order - b.dat
     border-radius: 2px;
     background: var(--accent-soft);
     color: var(--accent);
+  }
+
+  .stop--edu .org { color: var(--ink-faint); }
+  .stop--edu h3 { font-size: 1.06rem; }
+
+  /* One column below 760px, rail pinned to the left gutter. The same curve and
+     the same code — only the rail's x changes. A horizontal roadmap would have
+     had to page sideways here, which is the reason this one is vertical. */
+  @media (max-width: 760px) {
+    /* One column, rail pinned to the left gutter. The same curve and the same
+       code — only the rail's x changes. A horizontal roadmap would have had to
+       page sideways here, which is the reason this one is vertical. */
+    .stops { padding-left: 46px; }
+    .stop { width: auto; }
+    .stop--left, .stop--right { align-self: stretch; }
+    /* The cloud must not bleed past the viewport, and clipping it would cut a
+       hard edge into the soft one — which is the thing it exists to avoid. So
+       the bleed is trimmed to fit inside the band's own padding instead. */
   }
 </style>

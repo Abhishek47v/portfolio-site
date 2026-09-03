@@ -11,5 +11,9 @@ export default defineConfig({
   output: 'static',
   integrations: [sitemap()],
   build: { inlineStylesheets: 'always' },
+  /* Astro injects a floating dev toolbar into every page in `astro dev`. It is
+     never in a production build, but it sits over the bottom of the design the
+     whole time you are looking at it, which is exactly when it is in the way. */
+  devToolbar: { enabled: false },
   compressHTML: true,
 });

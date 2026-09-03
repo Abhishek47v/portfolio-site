@@ -23,11 +23,27 @@ import { site } from '../data/site';
     <HeroActions />
   </div>
 
-  <div class="sheet">
-    <!-- Experience before Work: the roles establish who is speaking, and the
-         projects then read as evidence rather than as a list of side work. -->
-    <Experience />
-    <Work />
-    <Contact />
-  </div>
+  <!-- Projects before Experience. The work is the evidence and the roles are
+       the context for it; leading with three job titles asks someone to take
+       the credentials on trust before they have seen anything that was built.
+       Reversed from D-038, which had it the other way round for the opposite
+       reason — see D-049.
+
+       Work sits outside the sheet (D-047). The books are the only opaque
+       things in it: the open spread, the closed book beside it and the shelf's
+       spines all carry paper of their own, and the sky and ridges run straight
+       through everything else. -->
+  <Work />
+
+  <!-- Experience is outside the sheet too (D-046). The roadmap is a place, not
+       a panel: the sky and the fixed ridges show through behind it, and each
+       block carries its own cloud of --surface so the text still has a ground.
+       The sheet — and with it the rest of the page — begins at Contact and
+       continues into the colophon, so the page settles onto paper at the end. -->
+  <Experience />
+
+  <!-- Contact is on bare sky too (D-052). There is no sheet anywhere on the
+       page any more: every section floats, and text that needs a ground gets a
+       cloud of its own rather than a panel. -->
+  <Contact />
 </Base>

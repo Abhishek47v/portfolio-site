@@ -1,38 +1,533 @@
 ---
+/**
+ * Work / Projects — two featured projects as books, the rest as a shelf (D-047).
+ *
+ * The section floats on bare sky like Experience does: no sheet, no panel. The
+ * only opaque things are the objects that should be opaque — the two pages of
+ * the open book, the closed book beside it, and the shelf's own spines. Books
+ * are made of paper, so paper is the one thing that gets a fill.
+ *
+ * Everything here is rendered at build time. The prototype built the shelf in
+ * JavaScript and paid for it twice: the whole section vanished with scripts
+ * off, and re-running the geometry generator on every selection reshuffled
+ * every book's height and lean (0 of 18 slots survived one click). Here the
+ * spines and every project's detail are real markup, the geometry is seeded
+ * once at build, and the script only moves attributes around. Nothing is
+ * created at runtime, which also means none of this needs `:global()` — the
+ * trap that cost the Experience rail its styling entirely (D-046).
+ *
+ * With JavaScript off the book chrome and the shelf are hidden and every
+ * project's leaf shows at once, which is a plain, readable project list.
+ */
 import { getCollection } from 'astro:content';
-import ProjectRow from '../components/ProjectRow.astro';
+import ProjectShot from '../illustration/ProjectShot.astro';
 
 const projects = (await getCollection('projects')).sort(
   (a, b) => a.data.order - b.data.order,
 );
+
+/* The two most important projects open first; the rest stand on the shelf. */
+const featured = projects.slice(0, 2);
+
+/* Seeded at build time exactly like the sky's stars, so the shelf is identical
+   on every build and costs nothing at runtime. */
+let seed = 20260903;
+function rand(): number {
+  seed = (seed * 1103515245 + 12345) % 2147483648;
+  return seed / 2147483648;
+}
+
+/* A shelf is not ordered by importance — books go back wherever there is room.
+   Shuffling here is not decoration: the featured pair leave their gaps wherever
+   they stand, and if they stayed at positions one and two those gaps would sit
+   at the very left edge, reading as empty space *before* the shelf rather than
+   as books pulled from among their neighbours. */
+const shelf = projects
+  .map((p) => ({ p, k: rand() }))
+  .sort((a, b) => a.k - b.k)
+  .map(({ p }) => {
+    const h = Math.round(94 + rand() * 56); // 94–150
+    const w = Math.round(15 + rand() * 12); // 15–27
+    const lean = Math.round((rand() - 0.5) * 8); // −4…4 degrees
+    const tone = +(0.04 + rand() * 0.07).toFixed(3);
+    /* A rotation does not change an element's layout box, so a tall book
+       leaning even a few degrees swings its top corner past its own column and
+       into its neighbour — at 150px and 4° that is about 10px against a 3px
+       gap. Rotating about the bottom edge moves only the top, and only toward
+       the lean, so the space owed is h·sin(θ) on that one side. Reserving it as
+       a margin puts the swept width back into the layout instead of leaving the
+       overlap to chance. */
+    const overhang = Math.ceil(h * Math.abs(Math.sin((lean * Math.PI) / 180))) + 1;
+    return { p, h, w, lean, tone, overhang };
+  });
+
+/** Every shot a project has, primary first. Empty means the drawn placeholder. */
+function shotsFor(p: (typeof projects)[number]): { src: string; alt: string }[] {
+  const primary = p.data.image
+    ? [{ src: p.data.image, alt: p.data.imageAlt ?? `Screenshot of ${p.data.title}` }]
+    : [];
+  return [...primary, ...p.data.gallery];
+}
+
+const shelfCount = Math.max(0, shelf.length - 2);
+const shelfLabel = `${shelfCount} more project${shelfCount === 1 ? '' : 's'}`;
 ---
 
-<section id="work" class="band work" data-section-name="Work" aria-labelledby="work-title">
-  <div class="band-head" data-reveal>
-    <p class="label">Work</p>
+<section
+  id="work"
+  class="band band--free work"
+  data-section-name="Projects"
+  aria-labelledby="work-title"
+  data-book
+>
+  <div class="band-head rm-cloud" data-reveal>
+    <p class="label">Work / Projects</p>
     <h2 id="work-title">Things I've built</h2>
   </div>
 
-  <div class="list">
-    {projects.map((p, i) => (
-      <ProjectRow
-        title={p.data.title}
-        year={p.data.year}
-        role={p.data.role}
-        oneLine={p.data.oneLine}
-        problem={p.data.problem}
-        stack={p.data.stack}
-        links={p.data.links}
-        image={p.data.image}
-        imageAlt={p.data.imageAlt}
-        index={i}
-      />
-    ))}
+  <div class="featured">
+    <div class="book">
+      <span class="book-spine" aria-hidden="true"></span>
+
+      {projects.map((p, i) => (
+        <article class="leaf" data-leaf={p.id} data-open={i === 0 ? '' : undefined}>
+          <div class="page page--left">
+            <svg class="curl" viewBox="0 0 300 22" preserveAspectRatio="none" aria-hidden="true">
+              <path d="M0 4 Q160 -6 300 20" />
+            </svg>
+            <svg class="stack" viewBox="0 0 300 6" preserveAspectRatio="none" aria-hidden="true">
+              <path d="M4 1 H296 M8 5 H292" />
+            </svg>
+
+            {shotsFor(p).length === 0 ? (
+              <ProjectShot seed={i + 1} />
+            ) : (
+              <div class="plate" data-plate>
+                {shotsFor(p).map((shot, k) => (
+                  <img
+                    src={shot.src}
+                    alt={shot.alt}
+                    width="800"
+                    height="500"
+                    loading="lazy"
+                    decoding="async"
+                    data-shot
+                    data-shot-open={k === 0 ? '' : undefined}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Only when there is actually more than one shot. A project with a
+                single screenshot shows no affordance at all. Without JavaScript
+                every shot is visible and this control is hidden, so nothing
+                here is a dead button. */}
+            {shotsFor(p).length > 1 && (
+              <button class="more-shots mono" type="button" data-more
+                      aria-label={`Show the next photo of ${p.data.title}`}>
+                <span data-more-count>1 / {shotsFor(p).length}</span>
+                <span aria-hidden="true"> · more photos →</span>
+              </button>
+            )}
+          </div>
+
+          <div class="page page--right">
+            <svg class="curl" viewBox="0 0 300 22" preserveAspectRatio="none" aria-hidden="true">
+              <path d="M0 20 Q140 -6 300 4" />
+            </svg>
+            <svg class="stack" viewBox="0 0 300 6" preserveAspectRatio="none" aria-hidden="true">
+              <path d="M4 1 H296 M8 5 H292" />
+            </svg>
+
+            <p class="eyebrow mono">{p.data.year} · {p.data.role}</p>
+            <h3>{p.data.title}</h3>
+            <p class="one-line">{p.data.oneLine}</p>
+            <p class="problem">{p.data.problem}</p>
+
+            <ul class="chips">
+              {p.data.stack.map((s) => <li class="chip mono">{s}</li>)}
+            </ul>
+
+            {(p.data.links.live || p.data.links.repo) && (
+              <p class="links">
+                {p.data.links.live && <a class="visit" href={p.data.links.live}>Visit the site →</a>}
+                {p.data.links.repo && <a href={p.data.links.repo}>Source</a>}
+              </p>
+            )}
+          </div>
+        </article>
+      ))}
+    </div>
+
+    {featured[1] && (
+      <button class="corner" type="button" data-corner aria-label={`Open ${featured[1].data.title}`}>
+        <svg viewBox="0 0 130 168" aria-hidden="true">
+          <rect class="corner-pages" x="10" y="6" width="112" height="150" rx="3" />
+          <rect class="corner-cover" x="4" y="0" width="112" height="150" rx="3" />
+          <path class="corner-hinge" d="M22 4 V146" />
+          {/* the one place colour is spent on this section: a ribbon marking
+              the book you would reach for next */}
+          <path class="corner-ribbon" d="M84 0 h9 v52 l-4.5 -6 l-4.5 6 Z" />
+          {/* centred on the cover, not near its foot: anchored at y=130 a
+              nineteen-character title ran past the bottom edge of the book */}
+        </svg>
+        {/* The title is HTML over the cover rather than SVG <text>: a cover
+            title reads horizontally, and SVG text does not wrap, so a longer
+            project name would run straight off the board. */}
+        <span class="corner-title" data-corner-label>{featured[1].data.title}</span>
+        <span class="corner-caption mono">Also on the desk</span>
+      </button>
+    )}
   </div>
+
+  {shelf.length > 2 && (
+    <div class="shelf-wrap">
+      <div class="shelf-head">
+        <h3>The rest of my projects shelf</h3>
+        <span class="shelf-count mono" data-shelf-count>{shelfLabel}</span>
+      </div>
+
+      {/* A group of buttons, not a list: role="listitem" is not allowed on a
+          <button>, and axe is right to say so. Each spine already carries its
+          own name, so the group only needs a label. */}
+      <div class="shelf" role="group" aria-label="More projects">
+        <span class="plank" aria-hidden="true"></span>
+        {shelf.map(({ p, h, w, lean, tone, overhang }) => (
+          <button
+            class="spine"
+            type="button"
+            data-spine={p.id}
+            data-title={p.data.title}
+            data-year={p.data.year}
+            aria-label={`Open ${p.data.title}`}
+            style={`transform:rotate(${lean}deg);margin-left:${lean < 0 ? overhang : 0}px;margin-right:${lean > 0 ? overhang : 0}px`}
+          >
+            <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} aria-hidden="true">
+              {/* paper first, so a book reads as an object over the sky rather
+                  than as a wireframe, then a faint wash for tonal variation */}
+              <rect class="spine-paper" x="1" y="1" width={w - 2} height={h - 2} rx="2" />
+              <rect class="spine-tone" x="1" y="1" width={w - 2} height={h - 2} rx="2" style={`opacity:${tone}`} />
+              <rect class="spine-edge" x="1" y="1" width={w - 2} height={h - 2} rx="2" />
+              <path class="spine-rule" d={`M${(w * 0.32).toFixed(1)} 4 V${h - 4}`} />
+            </svg>
+          </button>
+        ))}
+      </div>
+
+      {/* One reading slot, always in the same place. Hovering a spine writes
+          the title here rather than floating a label over the shelf, so nothing
+          ever overlaps the thing it is describing (D-030, D-046). */}
+      <p class="shelf-note mono" data-shelf-note aria-hidden="true"></p>
+    </div>
+  )}
+
+  <p class="visually-hidden" aria-live="polite" data-announce></p>
 </section>
 
 <style>
   .work { --band: clamp(2.5rem, 6vw, 4.5rem); }
   .work h2 { font-size: var(--step-3); }
-  .list { display: flex; flex-direction: column; }
+
+  /* Small text on bare sky is at the palette's limit and this is not a taste
+     call: --ink-faint over the day sky measures about 2.26:1 where 4.5 is
+     required. --ink clears every sky stop and still clears 4.5:1 over the near
+     ridge — which is the reason that ridge was lightened (D-041). Labels here
+     cannot be softened and cannot be made smaller. */
+  .work .label,
+  .shelf-count,
+  .shelf-note,
+  .corner-caption { color: var(--ink); }
+
+  /* ---- the featured pair ---- */
+  .featured {
+    position: relative;
+    /* Room for the corner book, and for the page curls (top) and page-stack
+       hint (bottom) to reach past the book's own edges. The padding lives here
+       rather than on .book so that .book's content box coincides exactly with
+       the open leaf — that equality is what lets the spine use a plain
+       top:0/bottom:0 instead of a guessed offset (D-046). */
+    padding: clamp(1.75rem, 4.5vw, 2.75rem) clamp(0px, 11vw, 120px) clamp(2.5rem, 6vw, 3.5rem) clamp(1.25rem, 4vw, 2.5rem);
+  }
+
+  .book { position: relative; }
+
+  .book-spine {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 1.6px;
+    background: var(--ink-soft);
+    transform: translateX(-50%);
+    display: none;
+  }
+
+  .leaf {
+    display: grid;
+    grid-template-columns: minmax(0, 0.86fr) minmax(0, 1fr);
+    column-gap: clamp(2.5rem, 6vw, 4rem);
+  }
+  /* Without JavaScript every leaf shows and the chrome stays hidden: the
+     section degrades to a plain, readable list of projects rather than to an
+     empty book. */
+  [data-ready] .leaf { display: none; }
+  [data-ready] .leaf[data-open] { display: grid; }
+  [data-ready] .book-spine { display: block; }
+  .leaf + .leaf { margin-top: clamp(2rem, 5vw, 3rem); }
+  [data-ready] .leaf + .leaf { margin-top: 0; }
+
+  .page {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding-block: clamp(.5rem, 2vw, 1.25rem);
+    padding-inline: clamp(.75rem, 2vw, 1.25rem);
+    /* the page is the ground — the section behind it is transparent */
+    background: var(--sheet);
+    border: 1.4px solid var(--ink-faint);
+    border-radius: 3px;
+  }
+  .page--left { justify-content: center; }
+  [data-ready] .page { border-top: none; border-radius: 0 0 3px 3px; }
+
+  /* The chrome is per page and a fixed height, never one shape stretched over
+     the whole spread: the right page's text can be arbitrarily tall, and a
+     shared silhouette scaled to fit it either warps or grows tall enough to
+     arc over the text sitting on top of it. Both happened (D-047). */
+  .curl, .stack { display: none; position: absolute; overflow: visible; }
+  [data-ready] .curl, [data-ready] .stack { display: block; }
+  .curl { left: -1.4px; right: -1.4px; top: -21px; height: 22px; }
+  .curl path {
+    fill: none;
+    stroke: var(--ink-faint);
+    stroke-width: 1.4;
+    stroke-linecap: round;
+    vector-effect: non-scaling-stroke;
+  }
+  .stack {
+    left: clamp(.75rem, 2vw, 1.25rem);
+    right: clamp(.75rem, 2vw, 1.25rem);
+    bottom: -7px;
+    height: 6px;
+  }
+  .stack path {
+    stroke: var(--ink-faint);
+    stroke-width: 1;
+    opacity: .5;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .page--left :global(img),
+  .page--left :global(.shot svg) {
+    width: 100%;
+    height: auto;
+    border: 1px solid var(--edge);
+    border-radius: 2px;
+  }
+
+  .eyebrow { font-size: .68rem; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-faint); }
+  .leaf h3 { font-size: var(--step-2); margin-top: var(--s-1); }
+  .one-line { font-size: 1.04rem; margin-top: var(--s-3); }
+  .problem { color: var(--ink-soft); font-size: .95rem; margin-top: var(--s-3); }
+
+  .chips { display: flex; flex-wrap: wrap; gap: var(--s-2); list-style: none; padding: 0; margin: var(--s-4) 0 0; }
+  .chip {
+    font-size: .66rem;
+    letter-spacing: .05em;
+    padding: 3px 9px;
+    border-radius: 2px;
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+  .links { display: flex; flex-wrap: wrap; gap: var(--s-5); margin-top: var(--s-4); font-size: .95rem; }
+  .visit { color: var(--accent); }
+
+  /* ---- the closed book ---- */
+  /* The right padding above reserves a strip for this book, so it overlaps the
+     open spread's bottom-right corner by about twenty pixels and no more. It
+     used to sit at right:4% of the whole section, which put it squarely on top
+     of the right page's chips and links — a book covering the text it is
+     supposed to sit beside. */
+  .corner {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: clamp(88px, 13vw, 140px);
+    display: none;
+    background: none;
+    border: 0;
+    padding: 0;
+    text-align: left;
+    cursor: pointer;
+    transition: transform var(--dur-fast) var(--ease);
+  }
+  [data-ready] .corner { display: block; }
+  .corner:hover, .corner:focus-visible { transform: translateY(-4px); }
+  .corner svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .corner-pages { fill: var(--surface-strong); stroke: var(--ink-faint); stroke-width: 1; vector-effect: non-scaling-stroke; }
+  .corner-cover { fill: var(--sheet); stroke: var(--ink-faint); stroke-width: 1.3; vector-effect: non-scaling-stroke; }
+  .corner-hinge { stroke: var(--ink-faint); stroke-width: 1; opacity: .6; vector-effect: non-scaling-stroke; }
+  .corner-ribbon { fill: var(--accent); }
+  /* Below the ribbon, not beside it. Set alongside it the title had only a
+     narrow column to wrap in and the second line ran straight under the
+     bookmark; the ribbon ends at 31% of the cover's height, so the title
+     starts under it and gets the full width of the board. */
+  .corner-title {
+    position: absolute;
+    left: 15%;
+    right: 11%;
+    top: 40%;
+    font-family: var(--font-mono);
+    font-size: .58rem;
+    line-height: 1.35;
+    letter-spacing: .04em;
+    color: var(--ink);
+    text-align: left;
+    overflow-wrap: anywhere;
+  }
+  .corner-caption {
+    display: block;
+    margin-top: var(--s-2);
+    font-size: .62rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+
+  /* ---- the shelf ---- */
+  /* ---- the plate, and the shots behind it ---- */
+  .plate { position: relative; }
+  /* No JavaScript: every shot shows, stacked, and the control is hidden. */
+  [data-ready] .plate [data-shot] { display: none; }
+  [data-ready] .plate [data-shot][data-shot-open] { display: block; }
+  .plate [data-shot] + [data-shot] { margin-top: var(--s-3); }
+  [data-ready] .plate [data-shot] + [data-shot] { margin-top: 0; }
+
+  .more-shots {
+    display: none;
+    margin-top: var(--s-3);
+    padding: 0;
+    background: none;
+    border: 0;
+    align-self: flex-start;
+    font-size: .62rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    cursor: pointer;
+    transition: color var(--dur-fast) var(--ease);
+  }
+  [data-ready] .more-shots { display: inline-block; }
+  .more-shots:hover, .more-shots:focus-visible { color: var(--accent); }
+
+  .shelf-wrap { display: none; margin-top: clamp(2.5rem, 7vw, 4rem); }
+  [data-ready] .shelf-wrap { display: block; }
+
+  .shelf-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--s-4);
+    margin-bottom: var(--s-4);
+  }
+  .shelf-head h3 { font-size: var(--step-1); }
+  .shelf-count { font-size: .66rem; }
+
+  .shelf {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    /* a little breathing room so a gap at either end still has plank beside it */
+    padding: 0 14px clamp(1.5rem, 4vw, 2.25rem);
+  }
+  .plank {
+    position: absolute;
+    left: -8px;
+    right: -8px;
+    bottom: clamp(1.2rem, 3.6vw, 2rem);
+    height: 1px;
+    background: var(--ink-faint);
+    opacity: .75;
+  }
+
+  .spine {
+    position: relative;
+    flex: 0 0 auto;
+    align-self: flex-end;
+    display: block;
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    transform-origin: bottom center;
+    transition: translate var(--dur-fast) var(--ease);
+  }
+  .spine svg { display: block; overflow: visible; }
+  .spine-paper { fill: var(--sheet); }
+  .spine-tone { fill: var(--ink); }
+  .spine-edge {
+    fill: none;
+    stroke: var(--ink-faint);
+    stroke-width: 1.1;
+    vector-effect: non-scaling-stroke;
+    transition: stroke var(--dur-fast) var(--ease);
+  }
+  .spine-rule { stroke: var(--ink-faint); stroke-width: 1; opacity: .35; vector-effect: non-scaling-stroke; }
+
+  /* `translate` rather than `transform`, because `transform` already carries
+     the book's lean and animating it here would straighten every tilted book
+     on hover. */
+  .spine:hover, .spine:focus-visible { translate: 0 -7px; }
+  .spine:hover .spine-edge, .spine:focus-visible .spine-edge { stroke: var(--accent); }
+
+  /* A pulled book: the same slot, holding its own shape, drawn as the absence
+     of a book rather than removed from the layout — so the shelf never
+     reflows when a selection changes. */
+  .spine[data-pulled] { cursor: default; }
+  .spine[data-pulled] .spine-paper,
+  .spine[data-pulled] .spine-tone,
+  .spine[data-pulled] .spine-rule { opacity: 0; }
+  .spine[data-pulled] .spine-edge {
+    stroke-dasharray: 2.5 5;
+    opacity: .5;
+  }
+  .spine[data-pulled]:hover .spine-edge,
+  .spine[data-pulled]:focus-visible .spine-edge { opacity: .85; }
+  .spine[data-pulled]:hover, .spine[data-pulled]:focus-visible { translate: none; }
+
+  .shelf-note { min-height: 1.3em; font-size: .72rem; }
+  .shelf-note b { font-family: var(--font-body); font-weight: 500; }
+
+  /* The open leaf settles when it changes, using the site's own reveal motion
+     rather than a bespoke one. */
+  [data-ready] .leaf[data-open].is-settling { animation: leaf-settle var(--dur) var(--ease); }
+  @keyframes leaf-settle {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  @media (max-width: 760px) {
+    .featured { padding-right: 0; }
+    .leaf { grid-template-columns: 1fr; row-gap: var(--s-5); }
+    /* The chrome assumes two columns side by side: stacked, the spine would run
+       down the middle of the text and the curls would arc over nothing. Hidden
+       rather than adapted — whether a phone-width spread should look like a
+       book at all is a design question, not a hiding exercise (D-047). */
+    [data-ready] .book-spine,
+    [data-ready] .curl,
+    [data-ready] .stack { display: none; }
+    [data-ready] .page { border-top: 1.4px solid var(--ink-faint); border-radius: 3px; }
+    .page--left :global(img),
+    .page--left :global(.shot) { max-width: 340px; margin-inline: auto; }
+    .corner { position: static; width: 96px; margin-top: var(--s-5); }
+    /* Wrapping beats sideways scroll on a phone — the same call this project
+       already made for the Experience roadmap (D-046). */
+    .shelf { flex-wrap: wrap; row-gap: 10px; padding-bottom: var(--s-4); }
+    .plank { display: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .corner, .spine, .spine-edge { transition: none; }
+    [data-ready] .leaf[data-open].is-settling { animation: none; }
+  }
 </style>

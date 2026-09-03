@@ -1,11 +1,15 @@
 ---
 import { site } from '../data/site';
 import Character from '../illustration/Character.astro';
+import Social from '../components/Social.astro';
+import { hasLink } from '../lib/assets';
 
 /* The typewriter erases to nothing between roles, so the line would collapse
    and reflow on every swap if nothing held the width open. Reserve the longest
    role instead of a guessed constant — add a role and the reserve follows. */
 const widest = Math.max(...site.roles.map((r) => r.length));
+
+const hasResume = hasLink(site.links.resume);
 ---
 
 <section id="about" class="hero" data-section-name="About" aria-labelledby="hero-name">
@@ -28,6 +32,19 @@ const widest = Math.max(...site.roles.map((r) => r.length));
       </span>
       <span class="visually-hidden">{site.roles.join(', ')}.</span>
     </p>
+
+    <!-- Where to find him, before what he says about himself. The row is
+         marks and one control, so it costs a single line of the first screen's
+         height budget; anything taller here comes straight out of the stats
+         strip's visibility. -->
+    <div class="hero-links">
+      <Social />
+      {hasResume && (
+        <a class="action action--small" href={site.links.resume} target="_blank" rel="noopener">
+          Résumé
+        </a>
+      )}
+    </div>
 
     <p class="intro">{site.intro}</p>
 
@@ -139,6 +156,17 @@ const widest = Math.max(...site.roles.map((r) => r.length));
     min-width: calc(var(--roles-ch, 10) * 1ch);
   }
 
+  /* Marks and one pill on a single line. Without the flex the ul is a block,
+     the pill drops to a second row, and the whole first screen goes 35px past
+     the fold on a small phone — which is what happened. */
+  .hero-links {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--s-3) var(--s-5);
+    margin-block: var(--s-2) 0;
+  }
+
   .intro {
     margin-top: var(--s-3);
     /* Two lines on a desktop measure, which this copy only reaches by giving
@@ -175,6 +203,7 @@ const widest = Math.max(...site.roles.map((r) => r.length));
   @media (max-width: 560px) {
 
     .doing { font-size: clamp(1.3rem, 6vw, 1.7rem); }
+    .hero-links { margin-block: 0; gap: var(--s-2) var(--s-4); }
     .intro { font-size: .94rem; line-height: 1.42; }
   }
 
@@ -182,6 +211,7 @@ const widest = Math.max(...site.roles.map((r) => r.length));
      Past this point there is nothing left to trim politely. */
   @media (max-height: 700px) {
     .hero { padding-block: var(--s-3); }
+    .hero-links { margin-block: 2px 0; gap: var(--s-2) var(--s-4); }
     .inner { gap: 6px; }
     .figure { width: min(21rem, 50vw, 36vh); }
     h1 { margin-bottom: 2px; }

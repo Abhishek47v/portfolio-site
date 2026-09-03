@@ -96,20 +96,9 @@ h1.reveal.is-in, h2.reveal.is-in { letter-spacing: .004em; }
   animation: caret 1.05s steps(1, end) infinite;
 }
 
-/* The timeline draws itself once, when it comes into view. */
-.timeline-track {
-  transform: scaleY(0);
-  transform-origin: top center;
-  transition: transform 1200ms var(--ease);
-}
-.timeline.is-in .timeline-track { transform: scaleY(1); }
-
-.entry-dot {
-  transform: scale(0);
-  transition: transform 420ms var(--ease);
-  transition-delay: calc(var(--entry-index, 0) * 160ms + 240ms);
-}
-.timeline.is-in .entry-dot { transform: scale(1); }
+/* The Experience roadmap draws no rule of its own: scripts/roadmap.ts builds
+   the rail after layout, and it is simply present rather than animated in
+   (D-046). The old .timeline-track / .entry-dot keyframes went with it. */
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
@@ -124,9 +113,6 @@ h1.reveal.is-in, h2.reveal.is-in { letter-spacing: .004em; }
     letter-spacing: .004em;
   }
 
-  /* The timeline is drawn, not animated into being. */
-  .timeline-track { transform: scaleY(1); transition: none; }
-  .entry-dot { transform: scale(1); transition: none; }
   /* rotate() returns before it can add `.is-typing`, so the caret never
      renders here. This is the belt to that braces. */
   .rotator.is-typing .word::after { animation: none; opacity: 0; }

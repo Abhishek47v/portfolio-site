@@ -23,8 +23,34 @@ export const site = {
     email: 'hello@example.com', // PROVISIONAL — needs a personal address, not the work one
     github: 'https://github.com/Abhishek47v',
     linkedin: 'https://www.linkedin.com/in/abhishek-v612/',
-    /** Rendered only if public/resume.pdf exists at build time — see lib/assets. */
-    resume: '/resume.pdf',
+    /** PROVISIONAL — paste the profile URL and the icon appears. Empty hides it. */
+    leetcode: '',
+    /**
+     * Either a path in public/ or an external URL (a Drive share link, say).
+     * Empty, or a public/ path with no file behind it, hides every résumé
+     * control on the page rather than rendering a dead one — see lib/assets.
+     * PROVISIONAL: paste the Drive link here to turn all of them on at once.
+     */
+    resume: '',
+  },
+  /**
+   * The contact form's endpoint.
+   *
+   * A static site cannot send mail, so the form POSTs `name`, `email` and
+   * `message` to a form provider (Formspree, Web3Forms, Formspark, Getform —
+   * they all accept the same shape). **The destination address is configured in
+   * that provider's dashboard and is deliberately not in this repository**: it
+   * would otherwise be in the page source for every scraper to read.
+   *
+   * Empty disables the form's submit and says so on the page, rather than
+   * silently swallowing what someone typed. The build also derives the CSP's
+   * form-action and connect-src from this, so pasting a URL here is the only
+   * change needed — see scripts/csp-headers.mjs.
+   *
+   * PROVISIONAL.
+   */
+  contact: {
+    endpoint: '',
   },
   /** Social preview image, e.g. '/og/cover.png'. null omits the tags entirely
    *  rather than promising a card that does not exist. */

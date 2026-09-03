@@ -13,12 +13,26 @@
  * mapping from screen to user space is a plain linear scale because the svg is
  * `preserveAspectRatio="none"` over a fixed viewBox.
  *
- * Scope is deliberately narrow — the elements that sit on bare sky below the
- * hero. Everything else is on the sheet and is covered by the other spec.
+ * Scope is the elements that sit on bare sky below the hero: the stats strip,
+ * the Experience roadmap since it left the sheet (D-046), and Work since it
+ * left too (D-047). Everything else is on the sheet and is covered by the
+ * other spec.
+ *
+ * The roadmap forced one extension. Its text is not on bare sky — it is on
+ * clouds of --sheet *over* the ridges — so the ground is a composite of two
+ * things neither existing gate modelled together: this file knew the ridges but
+ * not the element's own background, and contrast.spec.ts knew backgrounds but
+ * not the ridges. `groundAt` now walks the ancestor chain the way that spec
+ * does and composites those layers over the real ridge fill underneath.
  */
 import { test, expect } from '@playwright/test';
 
-const POSITIONS = [0, 0.06, 0.12, 0.2, 0.3];
+/* Must reach the *bottom* of the page. Contact is the last section, so at 0.8
+   it is still below the fold and every selector in it was being skipped — the
+   probe stayed green with the label deliberately set to a failing colour. That
+   is the exact failure this file was written to prevent, so the list now ends
+   at 1. */
+const POSITIONS = [0, 0.06, 0.12, 0.2, 0.3, 0.42, 0.55, 0.68, 0.8, 0.9, 1];
 const THEMES = ['light', 'dark'] as const;
 
 /** WCAG: large text clears at 3:1, body and small text at 4.5:1. */
@@ -81,8 +95,52 @@ const probe = `(() => {
   };
   const ratio = (a, b) => { const l1 = lum(a), l2 = lum(b); const hi = Math.max(l1,l2), lo = Math.min(l1,l2); return (hi+0.05)/(lo+0.05); };
 
+  /** Ancestor background layers composited over whatever is really behind the
+   *  point — a ridge band if one is there, otherwise the sky. An opaque layer
+   *  ends the walk; nothing below it can show through. */
+  const groundAt = (el, x, y) => {
+    const layers = [];
+    /* Stops at body, and that is the whole correctness of this function.
+       body carries an opaque --surface-solid as the no-sky fallback, while the
+       real sky and ridges are fixed layers painted *over* it. Walking into body
+       finds an opaque light ground, ends the walk there and reports every
+       element as sitting on pale grey — which is how "open" measured 5.26:1
+       against a body background it never actually touches, while the true value
+       over the sky was 3.5:1. A gate that cannot see the surface it is judging
+       is worse than no gate (D-029), and for a while this was that gate. */
+    for (let n = el; n && n !== document.body; n = n.parentElement) {
+      const c = num(getComputedStyle(n).backgroundColor);
+      if (c[3] > 0) layers.push(c);
+      if (c[3] === 1) return layers.reduceRight((acc, l) => over(l, acc), [0,0,0]);
+    }
+    return layers.reduceRight((acc, l) => over(l, acc), behind(x, y));
+  };
+
   const out = [];
-  for (const el of document.querySelectorAll('.stats .value, .stats .label')) {
+  const SELECTOR = [
+    '.stats .value', '.stats .label',
+    // the roadmap, which is on bare sky below the hero since D-046
+    '.exp .when', '.exp .org', '.exp h3', '.exp .one-line',
+    '.exp .highlights li', '.exp .chip',
+    '.exp .label', '.exp h2',
+    // Work left the sheet too (D-047). Its labels sit on bare sky; the book's
+    // own text sits on pages of --sheet, which groundAt composites for us.
+    '.work .label', '.work h2', '.work .shelf-head h3', '.work .shelf-count',
+    '.work .corner-caption', '.work .corner-title', '.work .more-shots',
+    '.work .eyebrow', '.work .one-line',
+    '.work .problem', '.work .chip', '.work .leaf h3',
+    // Contact left the sheet in D-052, so every word of it is out here too.
+    // .ol-open is the end of the thread and the smallest text on bare sky:
+    // it is real DOM text precisely so this probe can measure it.
+    '.contact .label', '.contact h2', '.contact .sub',
+    '.contact .mail a', '.contact .links a', '.contact .ol-open',
+    // the form is on bare sky as well — its labels, its typed value colour,
+    // its status line and the filled button (whose own ground groundAt reads)
+    '.contact .field label', '.contact .field input', '.contact .field textarea',
+    '.contact .form-note', '.contact .form button',
+    '.colophon', '.colophon a'
+  ].join(', ');
+  for (const el of document.querySelectorAll(SELECTOR)) {
     const r = el.getBoundingClientRect();
     if (r.bottom < 0 || r.top > window.innerHeight || r.width === 0) continue;
     const st = getComputedStyle(el);
@@ -95,17 +153,20 @@ const probe = `(() => {
       for (let iy = 0; iy < 3; iy++) {
         const x = r.left + r.width * (0.1 + 0.2*ix);
         const y = r.top + r.height * (0.25 + 0.25*iy);
-        const v = ratio(over(ink, behind(x, y)), behind(x, y));
+        if (y < 0 || y > window.innerHeight) continue;
+        const g = groundAt(el, x, y);
+        const v = ratio(over(ink, g), g);
         if (v < worst) { worst = v; at = [Math.round(x), Math.round(y)]; }
       }
     }
-    out.push({ text: el.textContent.trim(), large, ratio: +worst.toFixed(2), at });
+    if (worst === Infinity) continue;
+    out.push({ text: el.textContent.trim().slice(0, 42), large, ratio: +worst.toFixed(2), at });
   }
   return out;
 })()`;
 
 for (const theme of THEMES) {
-  test(`stats stay legible over the ridges — ${theme}`, async ({ page }) => {
+  test(`bare-sky text stays legible over the ridges — ${theme}`, async ({ page }) => {
     await page.goto('/');
     await page.evaluate((t) => document.documentElement.setAttribute('data-theme', t), theme);
 
@@ -113,11 +174,18 @@ for (const theme of THEMES) {
     let sampled = 0;
 
     for (const pos of POSITIONS) {
+      /* `behavior: 'instant'`, and it matters. base.css sets
+         `scroll-behavior: smooth` on html, so a plain scrollTo *animates* — and
+         this probe samples 80ms later, long before the page has arrived. At
+         frac 1 on a 5100px page it had travelled 827px of 4304, so every
+         selector in the last section was off-screen and silently skipped. The
+         probe stayed green with a label deliberately set to a failing colour,
+         which is the precise failure this file exists to prevent. */
       await page.evaluate((frac) => {
         const max = document.documentElement.scrollHeight - window.innerHeight;
-        window.scrollTo(0, Math.round(max * frac));
+        window.scrollTo({ top: Math.round(max * frac), behavior: 'instant' });
       }, pos);
-      await page.waitForTimeout(80);
+      await page.waitForTimeout(90);
 
       const rows = (await page.evaluate(probe)) as
         { text: string; large: boolean; ratio: number; at: [number, number] }[];
@@ -133,7 +201,7 @@ for (const theme of THEMES) {
 
     // The failure this whole file exists to prevent is a probe that sees
     // nothing and reports success.
-    expect(sampled, 'the probe never found the stats strip').toBeGreaterThan(0);
+    expect(sampled, 'the probe never found any bare-sky text').toBeGreaterThan(0);
     expect(failures, failures.join('\n')).toEqual([]);
   });
 }

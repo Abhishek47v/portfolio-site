@@ -10,10 +10,15 @@
    'About' points at the hero rather than at a section of its own — the
    introduction is the hero, and a second block restating it was the weakest
    thing on the page. */
-const items = [
-  { href: '#about', label: 'About' },
+const items: { href: string; label: string; watch?: string }[] = [
+  /* '#top' is the document's own top, not an element — the HTML spec defines
+     that fragment when nothing matches it. The hero starts a little below the
+     fold's top (.first-screen has a margin and the section has padding), so
+     '#about' landed short of the page top by exactly that much. `watch` keeps
+     the highlight pointed at the real #about element (D-055). */
+  { href: '#top', label: 'About', watch: 'about' },
+  { href: '#work', label: 'Projects' },
   { href: '#experience', label: 'Experience' },
-  { href: '#work', label: 'Work' },
   { href: '#contact', label: 'Contact' },
 ];
 ---
@@ -21,7 +26,7 @@ const items = [
 <nav class="nav" aria-label="Sections">
   <ul>
     {items.map((i) => (
-      <li><a href={i.href} data-nav={i.href.slice(1)}>{i.label}</a></li>
+      <li><a href={i.href} data-nav={i.watch ?? i.href.slice(1)}>{i.label}</a></li>
     ))}
   </ul>
 </nav>

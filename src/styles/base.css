@@ -88,11 +88,6 @@ button {
   padding-inline: var(--gutter);
 }
 
-/* One continuous sheet, not a stack of identical panels (D-030).
-   The sky shows in the margins beside it and behind the hero above it; the
-   sheet itself runs unbroken to the foot of the page, so it reads as the page
-   rather than as a card. Sections inside are separated by hairlines and by
-   changes of rhythm, never by more boxes. */
 /* The introduction and the numbers share the first screen. A statistic you
    have to scroll to find is not doing the job a statistic exists for, so the
    hero takes the space that is left after the strip is placed rather than the
@@ -129,32 +124,110 @@ button {
    only 4px between the button and the bottom of a 740px screen, which one
    line of real copy would erase. */
 @media (max-width: 560px) {
-  .first-screen { margin-top: .4rem; }
+  .first-screen { margin-top: .15rem; }
 }
 
-.sheet {
-  width: 100%;
-  max-width: var(--wrap);
-  margin-inline: auto;
-  background: var(--sheet);
-  border: 1px solid var(--edge);
-  border-bottom: 0;
-  border-radius: 2px 2px 0 0;
-  backdrop-filter: blur(14px) saturate(112%);
-  -webkit-backdrop-filter: blur(14px) saturate(112%);
-}
+/* There is no .sheet any more. Every section floats on the sky and text that
+   needs a ground gets a cloud (D-052); the primitive and its --foot variant
+   were deleted rather than left behind for something to accidentally pick up.
+   `--sheet` the *colour token* is still very much in use: it is what the
+   clouds are filled with. */
 
-/* The footer continues the same sheet, so it must not draw its own top edge —
-   two adjacent borders read as a seam across the page. */
-.sheet--foot { border-top: 0; border-radius: 0; }
-
-/* A section within the sheet. The rhythm is deliberately uneven — each
-   section sets its own vertical measure via --band. */
+/* A section. The rhythm is deliberately uneven — each section sets its own
+   vertical measure via --band. */
 .band {
   padding: var(--band, var(--s-7)) clamp(1.25rem, 5vw, 4rem);
   border-top: 1px solid var(--edge);
 }
 .band:first-child { border-top: 0; }
+
+/* A band that floats on the sky. It has to carry its own width — without it
+   the section runs the full page and sits wider than the rest of the site —
+   and no top hairline, which on bare sky would be a rule ruled across the sky.
+   Every section now uses it (Experience D-046, Work D-047, Contact D-052).
+
+   This lives here rather than in a component because more than one section
+   uses it. Astro scopes component styles, so a copy in one component silently
+   does nothing for the others — which is exactly how Work came to render
+   full-bleed. */
+.band--free {
+  width: 100%;
+  max-width: var(--wrap);
+  margin-inline: auto;
+  border-top: 0;
+}
+
+/* ---- the cloud ----
+   The section floats on bare sky, and bare sky cannot carry small type on the
+   day palette: --ink-faint measures 2.26:1 against the lightest sky stop the
+   section scrolls past, where 4.5 is required (D-046). So each block sits in
+   a cloud of its own. The class is rm-cloud, not cloud: Sky.astro already owns
+   .cloud for the drifting sky shapes, and the collision made the contrast
+   probe sample an SVG whose className is an SVGAnimatedString, not a string.
+   It is `air, not a card` — the same idea the --surface role exists for.
+
+   It is a real background-color, not a gradient, for two reasons: the
+   contrast gate reads backgroundColor off the ancestor chain and would be
+   blind to a gradient, and a flat colour is the only kind whose contrast can
+   be computed rather than guessed. The rectangle is then dissolved by a mask
+   of overlapping lobes, which is what makes it a cloud instead of a tile.
+
+   The alpha is --sheet's .88 rather than --surface's .74 because the section
+   scrolls across the fixed ridge band, which is far darker than any sky stop
+   (D-039, D-041). Measured over the near ridge by day, .74 puts --ink-faint
+   at 4.31:1 and --accent at 4.15:1 — both under the bar. At .88 they are
+   5.11 and 4.92. This is a legibility floor, not a preference; lighten it and
+   tests/ridge-contrast.spec.ts fails, which is the point.
+
+   INVARIANT: the mask's opaque core must cover the whole padding box. The
+   padding exists to give the fade somewhere to happen — shrink it and text
+   drifts into the soft edge, where the measured contrast stops being true. */
+.rm-cloud {
+  /* Only alpha is read from a mask, so the colour is irrelevant —
+     currentColor keeps a literal out of the file and the token gate green. */
+  --lobe: currentColor 0%, currentColor 78%, transparent 100%;
+  position: relative;
+  /* content-box so the padding grows the cloud *outward* rather than eating
+     the text column, and a negative inline margin pulls it back so the text
+     still lines up where a plain 340px block would sit. Only the inline
+     margin is negative — a negative block margin would clobber .band-head's
+     own bottom margin and fight the authored gaps between stops. */
+  box-sizing: content-box;
+  padding: 38px 44px;
+  margin-inline: -44px;
+  background-color: var(--sheet);
+  -webkit-mask-image:
+    radial-gradient(50% 50% at 50% 50%, var(--lobe)),
+    radial-gradient(18% 20% at 18% 20%, var(--lobe)),
+    radial-gradient(18% 20% at 82% 20%, var(--lobe)),
+    radial-gradient(18% 20% at 18% 80%, var(--lobe)),
+    radial-gradient(18% 20% at 82% 80%, var(--lobe)),
+    radial-gradient(16% 34% at 16% 50%, var(--lobe)),
+    radial-gradient(16% 34% at 84% 50%, var(--lobe)),
+    radial-gradient(34% 18% at 50% 18%, var(--lobe)),
+    radial-gradient(34% 18% at 50% 82%, var(--lobe));
+  mask-image:
+    radial-gradient(50% 50% at 50% 50%, var(--lobe)),
+    radial-gradient(18% 20% at 18% 20%, var(--lobe)),
+    radial-gradient(18% 20% at 82% 20%, var(--lobe)),
+    radial-gradient(18% 20% at 18% 80%, var(--lobe)),
+    radial-gradient(18% 20% at 82% 80%, var(--lobe)),
+    radial-gradient(16% 34% at 16% 50%, var(--lobe)),
+    radial-gradient(16% 34% at 84% 50%, var(--lobe)),
+    radial-gradient(34% 18% at 50% 18%, var(--lobe)),
+    radial-gradient(34% 18% at 50% 82%, var(--lobe));
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
+.band-head.rm-cloud { width: fit-content; max-width: 100%; }
+
+@media (max-width: 760px) {
+  /* The cloud must not bleed past the viewport, and clipping it would cut a
+     hard edge into the soft one — the thing it exists to avoid. So the bleed is
+     trimmed to fit inside the band's own padding instead. */
+  .rm-cloud { padding: 30px 24px; margin-inline: -20px; }
+}
 
 .band-head {
   display: flex;
@@ -163,6 +236,56 @@ button {
   margin-bottom: var(--s-5);
 }
 
+
+/* ---- the pill control ----
+   A button-shaped link. It lives here rather than in a component because two
+   of them now use it — the hero's résumé button and the call to action under
+   the stats — and Astro scopes component styles, so a copy in one of them is
+   silently no styling at all in the other. That mistake has already been made
+   three times in this codebase (.band--free, .rm-cloud, D-047/D-048); the rule
+   is simply: if two sections use a class, it is not a component style. */
+.action {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: .72rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  padding: 11px 20px;
+  /* Explicit, not inherited. body sets 1.68 for prose, and a pill that takes
+     paragraph leading is 6px taller than the text inside it needs — which on
+     the first screen is 6px of the stats strip's visibility, twice over. */
+  line-height: 1.1;
+  border: 1px solid var(--edge);
+  border-radius: 999px;
+  text-decoration: none;
+  background: var(--surface);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: border-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+.action:hover { border-color: var(--accent); }
+
+/* Solid, not a tinted veil. --accent-soft is 13% alpha by day, so the button
+   was a faint outline over whatever sky or ridge happened to be behind it —
+   and being the last element on the first screen, it usually sat over the
+   hills. A solid fill is legible against all of them, and it is the only
+   element on the page asking to be clicked, so it should look like it. */
+.action--primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+  font-weight: 500;
+}
+.action--primary:hover { background: var(--ink); border-color: var(--ink); }
+
+/* Smaller, for a row that sits beside body copy rather than under a headline. */
+.action--small { padding: 7px 15px; font-size: .67rem; }
+/* On a phone this one is inside the first screen's height budget. */
+@media (max-width: 560px) {
+  /* 11px of glyph plus 6px each side is 25px — under this it stops clearing
+     the 24px minimum target size. */
+  .action--small { padding: 6px 12px; font-size: .64rem; letter-spacing: .08em; }
+}
 
 .label {
   font-family: var(--font-mono);
