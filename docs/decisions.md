@@ -602,7 +602,7 @@ responded.
 
 ## D-034 — The Room was built outside this thread, and has been removed
 
-**What happened:** between sessions, a workspace illustration (`Room.astro`) with
+**What happened:** between one working pass and the next, a workspace illustration (`Room.astro`) with
 a derived tool rail, pinned role cards and a period-focus interaction was added,
 `Hero.astro` was rewritten around it, and a room palette was added to
 `tokens.css`. Two decisions were recorded for it.
@@ -1070,7 +1070,7 @@ suite goes red at 4.2:1, then restoring it.
   a phone, where that block runs the full width. It is placed from the last
   block's bottom instead.
 
-**And one worth keeping separate:** every manual screenshot in this session was
+**And one worth keeping separate:** every manual screenshot taken while building this was
 taken against a stale `astro dev` still holding `[::1]:4321`, because `localhost`
 resolves to the IPv6 loopback first and the static server binds the wildcard.
 This is exactly D-045, hit by hand minutes after fixing it for the suite. The
@@ -1210,7 +1210,7 @@ ribbon's and the cover's own boxes: no overlap, fully inside.
 inside `Experience.astro`, and Astro scopes component styles — so it would have
 done nothing for Work, exactly as `.band--free` did nothing an hour earlier
 (D-047). It is now in `base.css`, where a class shared by two sections belongs.
-That is twice in one session that the same mistake produced the same silent
+That is twice in one working pass that the same mistake produced the same silent
 failure; the rule is recorded with the project's other traps.
 
 **Extra photos are a content capability, not a fixed slot.** `gallery` is a new
@@ -1681,7 +1681,7 @@ on the LeetCode mark, all three résumé controls and the LeetCode and Résumé
 rows in Contact — `lib/assets § hasLink` was already gating every one of them,
 so nothing needed wiring. The three projects carry the résumé's own text,
 trimmed to the schema's word budgets. `year` and `role` on each are still an
-earlier session's guesses and remain unverified. QuipWire stays `provisional`
+earlier pass's guesses and remain unverified. QuipWire stays `provisional`
 because its stack was invented and the résumé does not name one; the other two
 name theirs (MERN, and React/SQL/Java) and are now real content.
 
