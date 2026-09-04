@@ -16,7 +16,7 @@ export const site = {
     'front-end engineering',
     'production debugging',
   ],
-  /** PROVISIONAL — needs a sentence only he would write. */
+  /** The introduction. One sentence, in his own voice. */
   intro:
     'Software engineer working on production systems. I like the part of the job where the answer is not written down yet — the tracing, the debugging, the moment a system finally explains what it has been doing.',
   links: {

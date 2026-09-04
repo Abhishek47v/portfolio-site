@@ -10,5 +10,5 @@ highlights:
   - Take changes through review, staging and release, and stay with them once they are live.
 stack: [TypeScript, Python, React, Node.js, PostgreSQL, Git]
 order: 1
-provisional: true
+provisional: false
 ---

@@ -1,9 +1,8 @@
 /**
  * What I build with, grouped by the part of the system it belongs to (D-056).
  *
- * PROVISIONAL — the grouping is right but the list is mine to confirm, and a
- * few entries below are plausible rather than true. `npm run content:status`
- * lists this file until that word is gone.
+ * Confirmed by the owner. Adding one is a line here and a row in the section;
+ * the layout does not care how many there are.
  *
  * **Two tiers, and they are the whole hierarchy.** `lead` is what actually
  * gets reached for; it is set in the body face at 600. `rest` is everything

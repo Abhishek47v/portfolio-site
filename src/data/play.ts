@@ -4,9 +4,8 @@
  * Reached by pressing and holding the sun/moon in the header. Nothing links to
  * it and nothing announces it; it is meant to be found, not presented.
  *
- * PROVISIONAL — every title below is invented. Replace them with what is
- * actually installed; `npm run content:status` lists this file until the word
- * above is gone.
+ * Confirmed by the owner. Keep it current: this is the one part of the site
+ * that dates, because it says what is installed *now*.
  *
  * **Editing this is the whole point.** Change a title, add a line, drop a
  * section by emptying its array — the panel renders what is here and lays out

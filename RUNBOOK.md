@@ -161,14 +161,51 @@ rebuild.
 
 ## Deploy
 
-Cloudflare Pages, connected to `main`.
+**Cloudflare Pages.** Free, unlimited bandwidth on static requests, custom
+domains on the free plan with external DNS allowed, and — the reason it is not
+GitHub Pages — it serves `_headers`. GitHub Pages cannot set response headers at
+all, so the entire CSP would silently not exist there. Netlify would also work.
 
-- Build command: `npm run build`
-- Output directory: `dist`
-- Node version: from `.nvmrc`
+### Once, to set it up
 
-`dist/_headers` ships the CSP. Set `site` in `astro.config.mjs` to the real
-origin when the domain is bought — the canonical URL and sitemap depend on it.
+1. **Point the production branch at the finished work.** Cloudflare builds the
+   repository's default branch. Merge to `main` before connecting anything, or
+   set the production branch explicitly in the project settings.
+2. Cloudflare dashboard → *Workers & Pages* → *Create* → *Pages* → *Connect to
+   Git* → this repository.
+3. Build settings:
+   - Framework preset: **Astro**
+   - Build command: `npm run build` — it also regenerates the CSP hashes into
+     `dist/_headers`, so never replace it with `astro build`
+   - Output directory: `dist`
+4. Environment variables (Settings → Environment variables, Production):
+   - `NODE_VERSION` = the value in `.nvmrc`
+   - `SITE_URL` = `https://<the custom domain>` — **this one matters.** Without
+     it, `astro.config.mjs` falls back to `CF_PAGES_URL`, which is the
+     `*.pages.dev` address, and every canonical link and sitemap entry points at
+     the preview domain instead of the real one.
+5. Deploy. Add the custom domain under *Custom domains*; Cloudflare issues the
+   certificate. **Redeploy afterwards**, so `SITE_URL` is baked into the build.
+
+### Verify the deployment, not the build
+
+```bash
+curl -sI https://<domain> | grep -i content-security-policy   # _headers is live
+curl -s  https://<domain>/sitemap-0.xml | head -3             # real origin, not pages.dev
+```
+
+Then, in a browser: submit the contact form once and confirm the message
+arrives, and check the console for CSP violations — a blocked request appears
+there and nowhere else.
+
+### What each host would break
+
+| Host | `_headers` (the CSP) | Notes |
+|---|---|---|
+| Cloudflare Pages | yes | unlimited static requests, 500 builds/month |
+| Netlify | yes | 100GB bandwidth on the free tier |
+| GitHub Pages | **no** | no custom headers at all; the CSP silently disappears |
+| Vercel | via `vercel.json` | `_headers` is ignored; it would need translating |
 
 ## Monthly rot check
 

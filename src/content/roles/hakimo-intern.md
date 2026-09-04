@@ -9,5 +9,5 @@ highlights:
   - Moved from isolated features to changes that had to survive other people using them.
 stack: [TypeScript, Python, React, Git, Linux]
 order: 2
-provisional: true
+provisional: false
 ---

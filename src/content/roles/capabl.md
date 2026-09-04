@@ -9,5 +9,5 @@ highlights:
   - First time writing code that someone other than me was going to have to read.
 stack: [JavaScript, React, Node.js, MongoDB]
 order: 3
-provisional: true
+provisional: false
 ---
