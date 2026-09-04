@@ -2,8 +2,8 @@
 title: QuipWire
 year: 2024
 role: Solo build
-oneLine: A social app built around delayed messages, engagement rewards and an in-app assistant.
-problem: Most social apps optimise for immediacy. QuipWire asked the opposite question — what changes when a message is written now but delivered later, and how do you keep people engaged across that gap?
+oneLine: A social app with time-capsule messaging, engagement rewards and an AI assistant that also listens.
+problem: Time Capsule Messaging holds a post until a date the author chooses, so writing and delivery come apart. Around it sit a reward system driven by engagement metrics and an AI assistant that answers by chat or by voice.
 stack: [React, Node.js, Express, MongoDB]
 links:
   live: https://example.com/demo

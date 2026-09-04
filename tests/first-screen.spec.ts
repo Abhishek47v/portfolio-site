@@ -39,6 +39,9 @@ for (const [width, height, label] of VIEWPORTS) {
   test(`the first screen fits — ${label} ${width}x${height}`, async ({ page }) => {
     await page.setViewportSize({ width, height });
     await page.goto('/');
+    // The Contact thread is drawn from measurements, so the sideways-scroll
+    // check below is only meaningful once it has actually been drawn.
+    await page.locator('[data-thread-ready]').waitFor({ state: 'attached' });
 
     const seen = await page.evaluate(() => {
       const strip = document.querySelector('.stats');
@@ -73,6 +76,11 @@ for (const [width, height, label] of VIEWPORTS) {
         barToken: token,
         stats: document.querySelectorAll('.stat').length,
         cta: cta.textContent.trim(),
+        // Not about the first screen, but this is the file that already knows
+        // ten widths. A real 29-character email address pushed the Contact
+        // thread's endpoint off the right edge and gave the whole page 82px of
+        // horizontal scroll, and nothing in the suite noticed.
+        sideways: document.documentElement.scrollWidth - document.documentElement.clientWidth,
       };
     });
 
@@ -105,6 +113,11 @@ for (const [width, height, label] of VIEWPORTS) {
       Math.round(seen!.bottom),
       `first-screen content ends ${Math.round(seen!.bottom - seen!.viewport)}px below the fold`,
     ).toBeLessThanOrEqual(seen!.viewport);
+
+    expect(
+      seen!.sideways,
+      `the page scrolls sideways by ${seen!.sideways}px`,
+    ).toBeLessThanOrEqual(0);
   });
 }
 

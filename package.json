@@ -7,7 +7,7 @@
     "node": ">=22.0.0"
   },
   "scripts": {
-    "dev": "astro dev",
+    "dev": "astro dev --force",
     "build": "astro build && node scripts/csp-headers.mjs",
     "preview": "astro preview",
     "check": "astro check",

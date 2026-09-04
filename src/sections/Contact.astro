@@ -218,8 +218,14 @@ const links = [
   .mail { margin: 0 0 clamp(3.4rem, 7vw, 5rem); max-width: none; }
   .mail a {
     /* The largest thing in the section after the heading. It is the one action
-       the whole page has been walking toward, so it is sized like it. */
-    font-size: clamp(1.32rem, .98rem + 1.15vw, 1.95rem);
+       the whole page has been walking toward, so it is sized like it — but it
+       has to fit its column on one line, and the column is the constraint, not
+       the page: above 900px Contact splits in two and the left column caps at
+       420px while the page keeps growing. A 29-character address wrapped at
+       360 and at every width from 900 up. The ceiling is what fits 420px
+       (~25.7px measured), taken down to 24 for margin; the floor is what fits
+       the 320px column of a 360px phone. Measure before raising either. */
+    font-size: clamp(1.15rem, 1.02rem + .6vw, 1.5rem);
     line-height: 1.25;
     letter-spacing: .004em;
     word-break: break-word;

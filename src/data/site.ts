@@ -20,18 +20,16 @@ export const site = {
   intro:
     'Software engineer working on production systems. I like the part of the job where the answer is not written down yet — the tracing, the debugging, the moment a system finally explains what it has been doing.',
   links: {
-    email: 'hello@example.com', // PROVISIONAL — needs a personal address, not the work one
+    email: 'heyiamabhishekverma@gmail.com',
     github: 'https://github.com/Abhishek47v',
     linkedin: 'https://www.linkedin.com/in/abhishek-v612/',
-    /** PROVISIONAL — paste the profile URL and the icon appears. Empty hides it. */
-    leetcode: '',
+    leetcode: 'https://leetcode.com/u/Abhishek_Verma612/',
     /**
      * Either a path in public/ or an external URL (a Drive share link, say).
      * Empty, or a public/ path with no file behind it, hides every résumé
      * control on the page rather than rendering a dead one — see lib/assets.
-     * PROVISIONAL: paste the Drive link here to turn all of them on at once.
      */
-    resume: '',
+    resume: 'https://drive.google.com/file/d/1RW7GUuGZJTtKOmPldWIn37lcK1OYtHiv/view?usp=sharing',
   },
   /**
    * The contact form's endpoint.

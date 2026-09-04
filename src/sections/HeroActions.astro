@@ -8,15 +8,27 @@
  * asking someone to look at the work before showing them any reason to is the
  * wrong way round.
  *
- * It carries one control, not two. The résumé used to sit beside it; there are
- * now résumé buttons in the header and in the hero's link row, and a third
- * copy of the same link 200px below the second is noise rather than emphasis.
+ * Two controls: the work, and the résumé beside it. They belong together —
+ * both answer "show me what you have done", one on the page and one on paper —
+ * and this is the only place either of them is offered inside the first screen.
+ * The résumé also has a permanent home in the header bar, which is a different
+ * job: that one is reachable from anywhere, this one is part of the invitation.
+ *
+ * The résumé renders only when there is a URL behind it (lib/assets § hasLink),
+ * so an empty link leaves the primary button alone and centred rather than
+ * beside a gap.
+ *
  * `.action` lives in base.css because the hero uses it too.
  */
+import { site } from '../data/site';
+import { hasLink } from '../lib/assets';
 ---
 
 <p class="actions">
   <a class="action action--primary" href="#work">See my works</a>
+  {hasLink(site.links.resume) && (
+    <a class="action" href={site.links.resume} target="_blank" rel="noopener">Résumé</a>
+  )}
 </p>
 
 <style>

@@ -1668,3 +1668,102 @@ Skills, the heading's cloud is `fit-content` at 592px, focused fields compute
 per-element attribution — reports every remaining failure as
 `experience/chip mono`. Nineteen of twenty tests pass; the failure is the
 pre-existing chip contrast defect, unchanged.
+
+---
+
+## D-058 — Real content, and what a 29-character email address broke
+
+**Context:** the real address, LeetCode profile and résumé link arrived, along
+with the résumé's own description of the three projects.
+
+**Content.** `site.links.email`, `.leetcode` and `.resume` are real, which turns
+on the LeetCode mark, all three résumé controls and the LeetCode and Résumé
+rows in Contact — `lib/assets § hasLink` was already gating every one of them,
+so nothing needed wiring. The three projects carry the résumé's own text,
+trimmed to the schema's word budgets. `year` and `role` on each are still an
+earlier session's guesses and remain unverified. QuipWire stays `provisional`
+because its stack was invented and the résumé does not name one; the other two
+name theirs (MERN, and React/SQL/Java) and are now real content.
+
+Every project's `links` block is gone. They pointed at `example.com/demo` and
+at the GitHub profile rather than a repository, and the section renders them as
+"Visit the site →" — a dead link that looks live is worse than no link.
+
+**The résumé button moved** from the hero's mark row to sit beside *See my
+works*. Both answer "show me what you have done", and the marks row is now what
+it says it is: three profiles. The header keeps its own copy, which does a
+different job — reachable from anywhere rather than part of the invitation.
+
+**A longer address ran the page off the side of the phone.** The placeholder was
+17 characters; the real one is 29. Contact's thread ends past the address —
+tail, ring, then the word `open` — and that assembly needs about 100px to the
+right of it, which at 390px no longer existed. The endpoint was drawn at x=472
+in a 390px viewport: **82px of horizontal scroll on every phone**, from a change
+that looked like editing one string.
+
+`open-line.ts` now measures the room instead of assuming it. When the marker
+does not fit on the address's line, the thread *hangs*: it dips below the rule
+and ends one line lower, inside `.mail`'s bottom margin. Where exactly is
+measured too — from the links row itself — because a fixed drop put the word on
+top of the LeetCode link, and any fixed number is wrong the moment that margin's
+clamp changes.
+
+**And the measurements were 10px out, which is a bug in its own right.**
+`.reveal` holds a block `translateY(10px)` below its layout position until it
+scrolls into view. `open-line.ts` draws at load, long before Contact is on
+screen, so every rect it measured was 10px low — while the SVG it draws into
+sits in `.contact`, which is not a revealed element. The address's rule has
+therefore been sitting 10px under the address this whole time. `revealShift()`
+walks ancestors summing `translateY` and subtracts it, so the thread is drawn
+against settled layout. Nothing is visible before the reveal finishes, so the
+settled position is the only correct one to draw against.
+
+**A new gate: the page must not scroll sideways.** `first-screen.spec.ts`
+already knows ten viewports, so it now also asserts
+`scrollWidth === clientWidth` at each. It caught the 82px immediately — and a
+second, older defect at 768 and 834: `.rm-cloud` bleeds `-44px` into `.band`'s
+inline padding, which is `clamp(1.25rem, 5vw, 4rem)` and therefore smaller than
+44px until the viewport reaches ~880. The education stop hangs 6px off the
+right at 768 and 2px at 834. That one is **reported, not fixed** — the exact
+remedy is capping the bleed to the padding actually available, and it belongs
+to whoever decides how those clouds should behave at tablet widths.
+
+**Verified:** zero sideways scroll at 360, 390 and 430; the marker clears the
+links row by 5px at 390 and 7px at 360; the ridge probe re-run with per-element
+attribution reports every remaining failure as `experience/chip mono` — none
+from the new content or controls. Seventeen of twenty tests pass: the chips, and
+the two tablet widths the new gate now fails on.
+
+---
+
+## D-059 — The address is sized by its column, and the marker stays in it
+
+**Context:** two defects the real address caused that D-058 did not catch,
+found by measuring across ten widths rather than looking at one.
+
+**1. It wrapped to two lines** at 360 and at *every* width from 900 up. The old
+`clamp(1.32rem, .98rem + 1.15vw, 1.95rem)` was sized against the page, and the
+page is not the constraint: above 900px Contact splits into two columns and the
+left one caps at **420px** while the viewport keeps growing, so the address got
+*bigger* as its column stayed still. At 1280 it wanted 480px in a 420px column.
+
+Now `clamp(1.15rem, 1.02rem + .6vw, 1.5rem)`. The ceiling is what fits 420px —
+measured at ~25.7px, taken to 24 for margin — and the floor is what fits the
+320px column of a 360px phone. Verified one line at 360, 390, 430, 768, 834,
+900, 1024, 1280, 1440 and 1680.
+
+**2. The marker was clamped to the section, so it sat on the form.** `room` was
+`W - 6`, which above 900px includes the right-hand column: the word `open`
+overlapped the form by 44-64px depending on width. `room` is now the address's
+own column (`.col`), which below the breakpoint is full width anyway — so the
+same change also stops the marker ending inside the band's padding on a phone.
+Measured clearance to the form is now 60-79px, and the marker sits 5-41px above
+the links row at every width.
+
+**3. Each project carries a repo and a site link again.** They were removed in
+D-058 because they pointed at `example.com/demo` and at the GitHub profile
+rather than a repository, and the section renders the first as "Visit the
+site →". Asked for back as deliberate placeholders. All three projects are
+therefore `provisional: true` again, which is what that flag is for — the copy
+is real, the links are not, and `npm run content:status` says so until they are
+replaced.

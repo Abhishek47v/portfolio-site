@@ -53,6 +53,26 @@ export function openLine(): void {
   /** The route's own top. The dashed cap covers everything above it. */
   const START_Y = 78;
 
+  /* How far below its layout position the reveal animation is currently
+     holding an element.
+
+     `.reveal` is `translateY(10px)` until it scrolls into view, and
+     getBoundingClientRect reports that transform while layout does not. This
+     draws long before Contact is on screen, so every rect it measures is 10px
+     low — while the SVG it draws into is not, because `.contact` itself is not
+     a revealed element. That is why the address's rule sat 10px under the
+     address once the block settled. Ancestors are walked because the transform
+     is on the block, not on the address inside it. Nothing is visible until
+     the reveal finishes, so the settled position is the only correct one. */
+  function revealShift(el: Element): number {
+    let y = 0;
+    for (let n: Element | null = el; n && n !== document.body; n = n.parentElement) {
+      const t = getComputedStyle(n).transform;
+      if (t && t !== 'none') y += new DOMMatrix(t).f;
+    }
+    return y;
+  }
+
   function draw(): void {
     const W = root!.clientWidth;
     if (!W) return;
@@ -68,7 +88,8 @@ export function openLine(): void {
     const now = document.querySelector('[data-rail] .rm-now');
     if (now) {
       const n = now.getBoundingClientRect();
-      const gap = Math.round(rect.top - (n.top + n.height / 2));
+      const nY = n.top - revealShift(now) + n.height / 2;
+      const gap = Math.round(rect.top - nY);
       // sane band only: a collapsed or absent roadmap must not drag the thread
       if (gap > 40 && gap < 1200) {
         lead = gap;
@@ -83,9 +104,10 @@ export function openLine(): void {
     layer!.replaceChildren();
 
     const m = mail!.getBoundingClientRect();
+    const mY = m.bottom - revealShift(mail!);
     // y = 0 is `lead` above the section's top
     const top = rect.top - lead;
-    const railY = Math.round(m.bottom - top + 10);
+    const railY = Math.round(mY - top + 10);
     const x1 = Math.round(m.left - rect.left - 6);
     const x2 = Math.round(m.right - rect.left + 6);
     // the rule reaches a little past the address on the arrival side
@@ -138,18 +160,57 @@ export function openLine(): void {
     route.style.setProperty('--len', len);
     route.setAttribute('stroke-dasharray', len);
 
-    // past the address it breaks back into dashes and drifts off
+    /* Past the address it breaks back into dashes and drifts off — if there is
+       anywhere to drift to.
+
+       The address is real content and can be any length. A 29-character one at
+       phone width ends about 60px from the edge of the section, and the tail,
+       the ring and the label need roughly 100 more: the endpoint went off the
+       right of the page and took 82px of horizontal scroll with it. So the room
+       is measured rather than assumed, and when there is none the thread hangs
+       instead — it dips below the address's rule and ends one line lower, with
+       the same three marks. It never stops early and it never runs off the
+       page. `.mail`'s bottom margin is what that lower line is drawn into. */
+    const lb = openLabel ? openLabel.getBoundingClientRect() : null;
+    const labelW = lb ? Math.ceil(lb.width) : 34;
+    const labelH = lb ? lb.height : 11;
+    const need = 22 + 8 + labelW; // ring centre + radius and gap, then the word
+    /* The room is the address's own column, not the section. Above 900px
+       Contact is two columns and the form is the right one: measured against
+       the section, the marker ran 44-64px into the form and the word `open`
+       sat on top of it. Below that breakpoint `.col` is full width, so this
+       also keeps the marker out of the band's padding, where it used to end. */
+    const col = root!.querySelector('.col');
+    const room = col
+      ? Math.round(col.getBoundingClientRect().right - rect.left) - 6
+      : W - 6;
+
     const reach = mobile ? 38 : 62;
-    const xe = x2 + reach;
-    const ye = railY + (mobile ? 6 : 8);
-    layer!.appendChild(
-      el('path', {
-        class: 'ol-tail',
-        d:
-          `M${x2} ${railY} C${x2 + reach * 0.45} ${railY}` +
-          ` ${x2 + reach * 0.62} ${ye - 2} ${xe} ${ye}`,
-      }),
-    );
+    let xe = x2 + reach;
+    let ye = railY + (mobile ? 6 : 8);
+    let tail =
+      `M${x2} ${railY} C${x2 + reach * 0.45} ${railY}` +
+      ` ${x2 + reach * 0.62} ${ye - 2} ${xe} ${ye}`;
+
+    if (xe + need > room) {
+      /* How far down is measured, not chosen. `.mail`'s bottom margin is the
+         slot the marker drops into, and the rule is already 10px into it — a
+         fixed 30px put the word on top of the LeetCode link, and a fixed
+         anything is wrong the moment that margin's clamp changes. Half the
+         remaining slot centres it between the rule and the row below. */
+      const list = root!.querySelector('.links');
+      const listY = list
+        ? Math.round(list.getBoundingClientRect().top - revealShift(list) - top)
+        : railY + 44;
+      // half the marker: the ring's radius and its stroke, or the word's own
+      // half-height, whichever reaches further from the centre line
+      const half = Math.max(8.5, labelH / 2);
+      ye = Math.max(railY + 9, Math.min(railY + 24, listY - 5 - half));
+      xe = Math.max(xa, Math.min(x2 - 8, room - need));
+      tail = `M${x2} ${railY} C${x2 + 10} ${railY + 4} ${xe + 26} ${ye - 7} ${xe} ${ye}`;
+    }
+
+    layer!.appendChild(el('path', { class: 'ol-tail', d: tail }));
 
     /* The endpoint: a ring with a gap facing the reader. The line does not
        stop, it stays open. `pathLength` makes the dash pattern a percentage so
@@ -163,7 +224,8 @@ export function openLine(): void {
        section coordinates, so the lead comes back off. */
     if (openLabel) {
       openLabel.style.left = `${xe + 30}px`;
-      openLabel.style.top = `${ye - lead - 5}px`;
+      // centred on the ring rather than offset by a guess at its height
+      openLabel.style.top = `${ye - lead - labelH / 2}px`;
     }
 
     root!.setAttribute('data-thread-ready', '');
