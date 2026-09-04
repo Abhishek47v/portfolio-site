@@ -263,7 +263,8 @@ files, so the CSP is reviewable in a diff rather than clicked into a dashboard.
 That format is shared with Netlify, so lock-in is near zero.
 **Rejected:** GitHub Pages — no custom header control, therefore no CSP, which is
 disqualifying under D-018. Vercel — free tier is hobby-only, no commercial use.
-**Status:** ACCEPTED
+**Status:** SUPERSEDED by D-064 — still Cloudflare, and for these reasons, but on
+Workers rather than Pages.
 
 ## D-017 — Analytics: none at launch
 
@@ -677,8 +678,8 @@ fixed.
    replacement display face was *not* preloaded, so it was discovered late.
 4. **`site` was a placeholder** (`example.pages.dev`). Canonical URLs, Open
    Graph URLs and the sitemap are all derived from it, so the first deploy would
-   have published wrong URLs. Now `SITE_URL` / `CF_PAGES_URL` with a localhost
-   fallback.
+   have published wrong URLs. Now `SITE_URL` with a localhost fallback that
+   `npm run deploy` refuses to ship (`CF_PAGES_URL` was dropped in D-064).
 5. **Anchor targets landed under the sticky header.** Every nav shortcut put the
    section heading behind the 60px bar. One line: `[id] { scroll-margin-top }`.
 6. **`twitter:card: summary_large_image` with no `og:image`** renders as a blank
@@ -2007,3 +2008,52 @@ removed — the sky is static per theme.
 
 **Shipped weight, measured:** 15,976 bytes of JavaScript, **5,856 gzipped**,
 plus 361 for the pre-paint theme file. The §5 budget is 8KB compressed.
+
+## D-064 — Deploy on Cloudflare Workers static assets, not Pages
+
+**Supersedes:** D-016, which chose Cloudflare Pages.
+**Options:** Cloudflare Workers (static assets) · Cloudflare Pages · Netlify ·
+GitHub Pages.
+**Chosen:** Cloudflare Workers, assets-only, deployed by Workers Builds from
+`main`.
+
+**Reason:** the platform recommendation moved. Cloudflare's own Pages landing
+page now opens by asking *"Are you sure you want to use Pages?"* and says
+Workers "is Cloudflare's primary platform for building applications. Start new
+projects with Workers." Everything D-016 chose Pages *for* is still true here —
+static-asset requests are free and unmetered, custom domains are on the free
+plan, and `_headers` is a committed file rather than a dashboard form — so this
+is the same decision pointed at the platform that is being developed.
+
+D-016's reasoning is not withdrawn; the `_headers` format is identical on both
+and shared with Netlify, so lock-in remains near zero.
+
+**What it changes in the repository:**
+
+- `wrangler.jsonc` — the whole deploy configuration, in the repo rather than in
+  a dashboard. No `main`: an assets-only Worker never invokes a script, so
+  requests stay free and there is no runtime to secure. `not_found_handling:
+  "404-page"` serves the built `404.astro`, which an assets-only Worker
+  otherwise answers with a bodyless 404.
+- `wrangler` as an exact-pinned devDependency. Workers Builds uses the version
+  in `package.json`, so pinning it is what stops the builder taking a new minor
+  on some unrelated future push. Pinned exactly like `astro` and `playwright`,
+  not caret-ranged like the type-checker.
+- **`CF_PAGES_URL` removed from `astro.config.mjs`.** Workers Builds does not
+  set it. Left in, it read as a safety net for preview branches that could
+  never actually fire.
+
+**The thing that replaces it,** because dropping a fallback without one would
+be a downgrade: `scripts/check-site-url.mjs`, run by `npm run deploy` before
+wrangler is invoked. It reads the origin out of `dist/sitemap-0.xml` and exits
+non-zero if it is missing or localhost.
+
+The check is on the **artifact**, not on the environment. An env var can be
+present and still not have reached the build — a wrong root directory, a
+variable scoped to the wrong environment — and the sitemap is the actual thing
+being published. The build image documents no `WORKERS_CI` variable to key off,
+so guessing one would have produced a gate that silently never ran; this one
+was verified in both directions before it was believed, per the rule this
+repository has needed twice (D-052).
+
+**Status:** ACCEPTED

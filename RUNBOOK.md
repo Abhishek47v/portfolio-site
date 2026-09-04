@@ -72,10 +72,11 @@ rendered.
 
 ## The site origin
 
-`astro.config.mjs` reads `SITE_URL`, falling back to `CF_PAGES_URL` and then to
-`http://localhost:4321`. Canonical URLs, Open Graph URLs and the sitemap are all
-built from it, so **the production deploy must set `SITE_URL`** — a placeholder
-there publishes wrong URLs to search engines.
+`astro.config.mjs` reads `SITE_URL`, falling back to `http://localhost:4321`.
+Canonical URLs, Open Graph URLs and the sitemap are all built from it, so **the
+production deploy must set `SITE_URL`** — a placeholder there publishes wrong
+URLs to search engines. `scripts/check-site-url.mjs`, which `npm run deploy`
+runs first, turns that from a silent mistake into a failed deploy.
 
 ## Optional assets
 
@@ -161,37 +162,76 @@ rebuild.
 
 ## Deploy
 
-**Cloudflare Pages.** Free, unlimited bandwidth on static requests, custom
-domains on the free plan with external DNS allowed, and — the reason it is not
-GitHub Pages — it serves `_headers`. GitHub Pages cannot set response headers at
-all, so the entire CSP would silently not exist there. Netlify would also work.
+**Cloudflare Workers, static assets.** Free, unlimited requests for static
+assets, custom domains on the free plan with external DNS allowed, and — the
+reason it is not GitHub Pages — it serves `_headers`. GitHub Pages cannot set
+response headers at all, so the entire CSP would silently not exist there.
+
+Not Pages, though Pages would also work and this runbook used to say so.
+Cloudflare's own Pages landing page now opens with *"Are you sure you want to
+use Pages? … It is Cloudflare's primary platform for building applications.
+Start new projects with Workers."* See D-064.
+
+`wrangler.jsonc` holds the whole deploy configuration, so the build settings
+live in the repository rather than in a dashboard someone has to remember to
+re-enter. There is no `main` in it: this is an assets-only Worker, no
+server-side code, so Cloudflare serves the files from its edge and never
+invokes a script.
 
 ### Once, to set it up
 
-1. **Point the production branch at the finished work.** Cloudflare builds the
-   repository's default branch. Merge to `main` before connecting anything, or
-   set the production branch explicitly in the project settings.
-2. Cloudflare dashboard → *Workers & Pages* → *Create* → *Pages* → *Connect to
-   Git* → this repository.
-3. Build settings:
-   - Framework preset: **Astro**
+1. **Find your `workers.dev` subdomain first.** Cloudflare dashboard →
+   *Compute (Workers)*; it is shown as `<subdomain>.workers.dev`. The site will
+   be at `https://portfolio.<subdomain>.workers.dev` — you need that string in
+   step 4, *before* the first build, or the first deploy publishes the wrong
+   canonical URLs.
+2. **Point the production branch at the finished work.** Cloudflare builds the
+   repository's default branch, which is `main`.
+3. Dashboard → *Compute (Workers)* → *Create* → *Import a repository* → this
+   repository. Connecting a private repository is fine; the Cloudflare GitHub
+   App asks for read access.
+4. Build settings:
    - Build command: `npm run build` — it also regenerates the CSP hashes into
      `dist/_headers`, so never replace it with `astro build`
-   - Output directory: `dist`
-4. Environment variables (Settings → Environment variables, Production):
-   - `NODE_VERSION` = the value in `.nvmrc`
-   - `SITE_URL` = `https://<the custom domain>` — **this one matters.** Without
-     it, `astro.config.mjs` falls back to `CF_PAGES_URL`, which is the
-     `*.pages.dev` address, and every canonical link and sitemap entry points at
-     the preview domain instead of the real one.
-5. Deploy. Add the custom domain under *Custom domains*; Cloudflare issues the
-   certificate. **Redeploy afterwards**, so `SITE_URL` is baked into the build.
+   - Deploy command: `npm run deploy` — **not** the default `npx wrangler
+     deploy`. The npm script runs `scripts/check-site-url.mjs` first, which
+     refuses to ship a build that still thinks it lives on localhost
+   - There is no output-directory field: `assets.directory` in `wrangler.jsonc`
+     is the answer, and it is already `./dist`
+5. Build variables (Settings → *Build* → *Build variables and secrets*):
+   - `SITE_URL` = `https://portfolio.<subdomain>.workers.dev` — **this one
+     matters.** Without it every canonical link and sitemap entry says
+     `http://localhost:4321`. The deploy command fails loudly rather than
+     publishing that, so a missing value costs a red build, not a bad site.
+   - `NODE_VERSION` is not needed. The build image reads `.nvmrc`.
+6. Deploy.
+
+### Later, when there is a custom domain
+
+1. Add it under the Worker's *Domains & Routes*; Cloudflare issues the
+   certificate.
+2. Change `SITE_URL` to `https://<the domain>`.
+3. **Redeploy**, so the new origin is baked into the build. Nothing rebuilds by
+   itself when an environment variable changes.
+
+### Deploying by hand
+
+Rarely needed — the Git integration is the normal path — but it works:
+
+```bash
+npx wrangler login                                  # once, opens a browser
+SITE_URL=https://<the live origin> npm run build
+npm run deploy
+```
+
+`npm run deploy:preview` uploads a version without promoting it to production.
 
 ### Verify the deployment, not the build
 
 ```bash
 curl -sI https://<domain> | grep -i content-security-policy   # _headers is live
-curl -s  https://<domain>/sitemap-0.xml | head -3             # real origin, not pages.dev
+curl -s  https://<domain>/sitemap-0.xml | head -3             # real origin, not localhost
+curl -so /dev/null -w '%{http_code}\n' https://<domain>/nope  # 404, from 404.astro
 ```
 
 Then, in a browser: submit the contact form once and confirm the message
@@ -202,7 +242,8 @@ there and nowhere else.
 
 | Host | `_headers` (the CSP) | Notes |
 |---|---|---|
-| Cloudflare Pages | yes | unlimited static requests, 500 builds/month |
+| Cloudflare Workers | yes | unlimited static-asset requests; what this uses |
+| Cloudflare Pages | yes | works, but Cloudflare steers new projects to Workers |
 | Netlify | yes | 100GB bandwidth on the free tier |
 | GitHub Pages | **no** | no custom headers at all; the CSP silently disappears |
 | Vercel | via `vercel.json` | `_headers` is ignored; it would need translating |

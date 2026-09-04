@@ -1,0 +1,29 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+
+  // An assets-only Worker: there is no `main`, because there is no server-side
+  // code to run. Cloudflare serves the built files straight from its edge and
+  // never invokes a script, so the site costs nothing per request and there is
+  // no runtime to keep secure. This replaced Cloudflare Pages in D-064.
+  "name": "portfolio",
+  "compatibility_date": "2026-09-05",
+
+  "assets": {
+    // `npm run build` writes here — Astro's output plus the real `dist/_headers`
+    // that scripts/csp-headers.mjs generates. Wrangler uploads the directory as
+    // it finds it; `_headers` is parsed by Cloudflare rather than served.
+    "directory": "./dist",
+
+    // Serve the built 404.astro for anything that does not match a file. The
+    // default for an assets-only Worker is a bare 404 with no body.
+    "not_found_handling": "404-page",
+
+    // The default, stated explicitly because it is load-bearing: `/about.html`
+    // is served without a trailing slash and `/about/index.html` with one, so
+    // the canonical URLs Astro emits and the URLs Cloudflare serves agree.
+    "html_handling": "auto-trailing-slash"
+  },
+
+  // Free, and the only way to see why a deploy misbehaved after the fact.
+  "observability": { "enabled": true }
+}

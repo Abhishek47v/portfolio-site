@@ -1,6 +1,8 @@
 node_modules/
 dist/
 .astro/
+# wrangler's local state: build cache, and the deploy identity it caches
+.wrangler/
 test-results/
 playwright-report/
 .DS_Store

@@ -206,9 +206,10 @@ references a role. Enforced by a CI grep for hex literals outside `tokens.css`.
 on an untouched repository. Turns dependency rot into a red email within a month
 instead of an archaeology session in two years (D-019).
 
-**Deploy:** Cloudflare Pages, connected to `main`. Preview URL per branch.
-`public/_headers` ships the CSP. Custom domain added when purchased; until then
-the `.pages.dev` URL is the site.
+**Deploy:** Cloudflare Workers static assets, built by Workers Builds from
+`main`. `wrangler.jsonc` is the deploy configuration and `public/_headers` ships
+the CSP. Custom domain added when purchased; until then the `.workers.dev` URL
+is the site. Pages until D-064.
 
 ## 10. Implementation order
 

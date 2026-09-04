@@ -16,7 +16,9 @@
     "gate:tokens": "node scripts/check-tokens.mjs",
     "verify": "npm run check && npm run gate:tokens && npm run build && npm run test",
     "serve": "node scripts/serve.mjs",
-    "content:status": "node scripts/content-status.mjs"
+    "content:status": "node scripts/content-status.mjs",
+    "deploy": "node scripts/check-site-url.mjs && wrangler deploy",
+    "deploy:preview": "node scripts/check-site-url.mjs && wrangler versions upload"
   },
   "dependencies": {
     "@astrojs/sitemap": "3.7.3",
@@ -26,6 +28,7 @@
     "@astrojs/check": "^0.9.10",
     "@playwright/test": "1.62.1",
     "axe-core": "4.13.0",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "wrangler": "4.129.0"
   }
 }
