@@ -1546,3 +1546,125 @@ document when no element matches it, so this needs no element, no script and no
 magic scroll-margin. `Nav.astro` gained an optional `watch` field so the active
 highlight still observes the real `#about` element. Verified: `scrollY` is 0
 after clicking it from 2500px down.
+
+## D-056 — Skills is an index, and everything in it is visible
+
+**Context:** a Skills section, placed between Projects and Experience. Three
+shapes were prototyped before this one was built.
+
+**Rejected — the bench with drawers.** Four fixed stations, four technologies
+each, everything past that in a drawer. It held the composition at a constant
+379px whether there were ten skills or forty, which was the original brief. It
+died on two objections: everything should be visible, and four categories had
+no home for a language, a test runner, or something being learned.
+
+**Rejected — a rail per discipline.** Every technology visible on its own
+horizontal rail. It reads well and keeps the workbench, but it measured **8.5px
+of height for every skill added** — twice the alternative — and on a page that
+already carries the roadmap's rail and Work's shelf it adds eight more
+horizontal hairlines.
+
+**Chosen — the index.** A label column, a flowing column, one hairline between.
+**4.2px per skill**, and it does not care how many groups there are. Measured
+across both prototypes at 13 and 48 skills, not estimated.
+
+**What the argument actually settled.** "Everything visible" and "the
+composition never grows" cannot both hold — 45 things in a fixed box is a
+denser box, and density was the thing being avoided. So the second requirement
+gave way, and the goal became *grow on one axis at a constant rhythm*. Long is
+fine here; the roadmap already proves a long section can be calm.
+
+**Hierarchy without hiding.** Nothing is concealed, so weight does all of it:
+`lead` entries are the body face at 600, `rest` is mono and smaller. A group
+may have an empty `lead` — Observability does. Groups are the structure and are
+data, not layout: adding a ninth costs one row.
+
+**Bare sky, and therefore no soft text.** Like Contact (D-053), and for the
+same reason clouds were not used: one cloud per group is eight clouds, which is
+the card shape D-030 removed. Every word is `--ink`, and **no rule in the
+section uses `opacity` on text** — the ridge probe reads `color` and cannot see
+through opacity, so a faded label would be a failure it could not detect. The
+separators are full `--ink` at a smaller size rather than faded `--ink` at the
+same size, for exactly that reason. The one softened thing is the spine, which
+is a border and not text.
+
+**A `<dl>`, not a stack of divs.** A group name is a term and its technologies
+are its description; the separators are `aria-hidden` so a screen reader hears
+a list rather than a row of dots.
+
+**The third tier is optional and rare.** Twelve of the forty-five entries carry
+a note saying what that technology is actually for; those become buttons and
+write into one shared line at the foot. No tooltips — the same rule the roadmap
+and the shelf follow. The line is `display: none` until the script runs, so
+with JavaScript off there is no empty rule under the list.
+
+**Verified:** 8 groups, 45 entries, all present with scripts off; the note line
+absent without them; no overflow at 390 or 1360; and the ridge probe extended
+to cover every selector in the section — confirmed by making it report which
+element failed, which showed all remaining failures are the pre-existing
+`chip mono` ones and none are from Skills.
+
+The nav gained a *Skills* shortcut, in document order, because the highlight
+resolves by taking the first listed section on screen.
+
+---
+
+## D-057 — Skills stops being interactive, the form gets a ground, and the nav highlight is measured rather than observed
+
+**Context:** four things asked for together after looking at the built page.
+
+**1. The Skills notes are gone.** Twelve entries were buttons that wrote a
+sentence into a shared line at the foot of the section (D-056). Removed: the
+names are the content, and everything else was an interaction to discover
+before it paid anything. `src/scripts/skills.ts` and `skillNotes` are deleted
+and the section is now entirely static — there is no script for it at all, so
+what you see with JavaScript off is what you see with it on. `.skills .note`
+came out of the ridge probe with it.
+
+**2. The Skills heading sits in a cloud.** D-056 put the whole section on bare
+sky. The heading is the same object as the ones over Work and Experience, and
+those carry `rm-cloud`; without it Skills read as a different kind of section
+rather than a peer. Only the heading takes it. The index below stays on bare
+sky, which is affordable because every word in it is `--ink` — the no-opacity
+rule from D-056 is unchanged and is the thing that makes this safe.
+
+**3. The form fields have a ground and no focus ring.** They were underlines on
+bare sky, and a ring appeared on every click: a text field matches
+`:focus-visible` even when it was reached with a mouse, so the accessibility
+affordance was firing for pointer users and drawing a hard rectangle on a page
+with no rectangles. The ring is gone. The indicator that replaces it is two
+changes at once — the ground steps `--surface` → `--surface-strong` and the
+bottom rule doubles to 2px `--accent`. Both are large, adjacent to the pointer
+and legible in either theme; the underline alone would have been too quiet to
+carry it on its own. `--surface` is the same translucent role the clouds are
+filled with, so the sky still reads through the field.
+
+**4. The nav highlight failed on the most obvious interaction there is.**
+Clicking *Skills* left the underline under *Projects*, every time. The
+IntersectionObserver watched a band from 60px down to 45% of the viewport and
+highlighted the first section in it *in document order*; a clicked section
+lands on its own `scroll-margin-top`, which leaves the previous section's last
+~20px inside that band, and being earlier it won. Every shortcut was wrong by
+one, and it was wrong in the direction that looks like the click did nothing.
+
+Replaced with the rule the design actually implies: **the current section is
+the last one whose top has passed the anchor line**, where the anchor is read
+off `scroll-margin-top` at runtime rather than written into the script — that
+is the exact line a clicked shortcut lands on, and it moves with `--bar-h` at
+the 860px breakpoint on its own. Resolution happens on a passive scroll
+listener coalesced into an animation frame: five rects read per frame, nothing
+written unless the answer changed. A listener also has the property the
+observer lacked — it reports where the page came to *rest*, not where it
+crossed a threshold, and a smooth scroll ends exactly on the threshold.
+
+`tests/nav.spec.ts` is new and clicks all five shortcuts, asserting the
+underline follows and that exactly one carries it; a second test walks the page
+by landing each section's top precisely on the anchor line. Both fail against
+the observer.
+
+**Verified:** 45 entries still render, zero interactive elements remain in
+Skills, the heading's cloud is `fit-content` at 592px, focused fields compute
+`outline-style: none` in both themes, and the ridge probe — re-run with
+per-element attribution — reports every remaining failure as
+`experience/chip mono`. Nineteen of twenty tests pass; the failure is the
+pre-existing chip contrast defect, unchanged.

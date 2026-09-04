@@ -1,0 +1,128 @@
+---
+/**
+ * Skills — how I build (D-056, amended by D-057).
+ *
+ * A label column, a flowing column, and one hairline between them. Every
+ * technology is visible, and none of it is behind an interaction: the section
+ * is a list of names and that is all it is. Two earlier shapes were prototyped
+ * and rejected: a fixed four-station bench that had to hide the overflow in
+ * drawers, and a rail per discipline that grew 8.5px for every skill added.
+ * This one grows 4.2px per skill and does not care how many groups there are.
+ *
+ * **Hierarchy without hiding.** Since nothing is concealed, weight does the
+ * work: `lead` entries are the body face at 600, `rest` is mono and smaller.
+ * The groups are the structure and the technologies are contents — which is
+ * why the group labels get a column of their own rather than sitting inline.
+ *
+ * **The heading sits in a cloud, the list does not** (D-057). The heading is
+ * the same object as the one over Work and Experience, so it carries the same
+ * ground; the index below it stays on bare sky, which is affordable because
+ * every word in it is --ink. Nothing here may be soft: bare sky puts
+ * --ink-faint at 2.26:1 by day (D-041), and no rule in this file uses
+ * `opacity` on text — the ridge probe reads `color` and cannot see through
+ * opacity, so a faded label would be a failure it could not detect.
+ * tests/ridge-contrast.spec.ts covers all of it.
+ *
+ * A <dl> and not a stack of divs: a group name really is a term and its
+ * technologies really are its description, and that is what a screen reader
+ * should be told.
+ *
+ * Entirely static. There is no script for this section and nothing to hover —
+ * with JavaScript off it is exactly the section you see with it on.
+ */
+import { skills } from '../data/skills';
+---
+
+<section
+  id="skills"
+  class="band band--free skills"
+  data-section-name="Skills"
+  aria-labelledby="skills-title"
+>
+  <div class="band-head rm-cloud" data-reveal>
+    <p class="label">Skills</p>
+    <h2 id="skills-title">How I build</h2>
+    <p class="sub">
+      What I build with, grouped by the part of the system it belongs to.
+    </p>
+  </div>
+
+  <dl class="index" data-reveal>
+    {skills.map((g) => (
+      <div class="group">
+        <dt class="group-name">{g.name}</dt>
+        <dd class="group-items">
+          {g.lead.map((t) => <span class="t t--lead">{t}</span>)}
+          {g.rest.map((t, i) => (
+            <>
+              {/* Punctuation, and hidden from the accessibility tree — a screen
+                  reader should hear a list of technologies, not a row of dots. */}
+              {(i > 0 || g.lead.length > 0) && <span class="sep" aria-hidden="true">·</span>}
+              <span class="t t--rest">{t}</span>
+            </>
+          ))}
+        </dd>
+      </div>
+    ))}
+  </dl>
+</section>
+
+<style>
+  .skills { --band: clamp(2.5rem, 6vw, 4.5rem); }
+
+  .band-head h2 { font-size: var(--step-3); }
+  .sub { color: var(--ink); max-width: 34rem; margin-top: var(--s-4); }
+  .skills .label { color: var(--ink); }
+
+  /* The two columns. The label column is a fixed measure so every group name
+     ends on the same rule, which is what makes the hairline read as a spine
+     rather than as eight unrelated borders. */
+  .index {
+    display: grid;
+    margin: clamp(2.2rem, 5vw, 3rem) 0 0;
+    padding: 0;
+    gap: clamp(1.1rem, 2.4vw, 1.6rem) 0;
+  }
+  .group { display: grid; grid-template-columns: 12.5rem minmax(0, 1fr); }
+
+  .group-name {
+    font-family: var(--font-mono);
+    font-size: .66rem;
+    text-transform: uppercase;
+    letter-spacing: .17em;
+    color: var(--ink);
+    text-align: right;
+    padding: 5px var(--s-5) 0 0;
+  }
+
+  .group-items {
+    margin: 0;
+    padding-left: var(--s-5);
+    /* A graphic, not text, so it may be softened — nothing readable is. */
+    border-left: 1px solid color-mix(in srgb, var(--ink) 38%, transparent);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 3px 9px;
+  }
+
+  .t { text-align: left; }
+  /* What actually gets reached for. */
+  .t--lead { font-family: var(--font-body); font-weight: 600; font-size: 1.02rem; letter-spacing: .002em; }
+  /* Everything else. Present and legible, and plainly secondary. */
+  .t--rest { font-family: var(--font-mono); font-size: .715rem; letter-spacing: .04em; }
+
+  /* Full --ink at a smaller size rather than faded --ink at the same size.
+     Opacity on text is invisible to the ridge probe, so this section does not
+     use it anywhere. */
+  .sep { font-family: var(--font-mono); font-size: .6rem; color: var(--ink); }
+
+  /* The label column costs 12.5rem, which is most of a phone. Below this the
+     group name sits above its own row instead, and the spine goes with it —
+     a 1px rule down the left of a full-width block is just an indent. */
+  @media (max-width: 760px) {
+    .group { grid-template-columns: minmax(0, 1fr); }
+    .group-name { text-align: left; padding: 0 0 5px; }
+    .group-items { padding-left: 0; border-left: 0; }
+  }
+</style>

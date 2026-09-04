@@ -174,27 +174,39 @@ const links = [
   .field textarea {
     font: inherit;
     color: var(--ink);
-    background: none;
+    /* A ground, not a box: --surface is the page's veil — the same translucent
+       role the clouds are filled with — so the sky still reads through the
+       field. It is what tells you where to type now that the focus ring is
+       gone. Only the bottom edge is drawn. */
+    background: var(--surface);
     border: 0;
     border-bottom: 1px solid var(--ink-faint);
-    border-radius: 0;
-    padding: 6px 2px;
+    border-radius: 3px 3px 0 0;
+    padding: 8px 8px;
     width: 100%;
-    transition: border-color var(--dur-fast) var(--ease);
+    transition: background-color var(--dur-fast) var(--ease),
+                border-color var(--dur-fast) var(--ease);
   }
   .field textarea { resize: vertical; min-height: 5.5rem; line-height: 1.5; }
+
+  /* No outline ring on focus (D-057). A text field matches :focus-visible even
+     when it was reached with a mouse, so the ring appeared on every click — a
+     hard rectangle on a page that has no rectangles. The indicator is instead
+     the two things that change together: the ground steps up to
+     --surface-strong and the bottom rule doubles and turns --accent. Both are
+     large, adjacent to the pointer, and visible in either theme; the
+     underline alone would have been too quiet to replace a ring. */
   .field input:focus,
-  .field textarea:focus {
+  .field textarea:focus,
+  .field input:focus-visible,
+  .field textarea:focus-visible {
     outline: none;
+    background: var(--surface-strong);
     border-bottom-color: var(--accent);
     border-bottom-width: 2px;
     /* the border thickens, so hold the box height still */
-    padding-bottom: 5px;
+    padding-bottom: 7px;
   }
-  /* The bottom rule is the only affordance, so it must not be the only focus
-     indicator too — keyboard users get the page's ring as well. */
-  .field input:focus-visible,
-  .field textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 
   .form-foot { display: flex; align-items: center; flex-wrap: wrap; gap: var(--s-4); }
   .form-note { font-size: .68rem; letter-spacing: .08em; color: var(--ink); }

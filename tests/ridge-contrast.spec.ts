@@ -129,6 +129,11 @@ const probe = `(() => {
     '.work .corner-caption', '.work .corner-title', '.work .more-shots',
     '.work .eyebrow', '.work .one-line',
     '.work .problem', '.work .chip', '.work .leaf h3',
+    // Skills puts only its heading in a cloud (D-057); the index below it is on
+    // bare sky. The separators are punctuation and aria-hidden, but they are
+    // still painted text, so they are sampled too.
+    '.skills .label', '.skills h2', '.skills .sub',
+    '.skills .group-name', '.skills .t', '.skills .sep',
     // Contact left the sheet in D-052, so every word of it is out here too.
     // .ol-open is the end of the thread and the smallest text on bare sky:
     // it is real DOM text precisely so this probe can measure it.
