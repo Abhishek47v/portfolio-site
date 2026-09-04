@@ -231,7 +231,11 @@ export function openLine(): void {
     root!.setAttribute('data-thread-ready', '');
   }
 
-  const linked = (on: boolean): void => svg.classList.toggle('is-linked', on);
+  const linked = (on: boolean): void => {
+    // Braces, not a concise body: classList.toggle returns a boolean and this
+    // is declared void, which `astro check` is right to reject.
+    svg.classList.toggle('is-linked', on);
+  };
   mail.addEventListener('mouseenter', () => linked(true));
   mail.addEventListener('mouseleave', () => linked(false));
   mail.addEventListener('focus', () => linked(true));

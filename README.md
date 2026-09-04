@@ -1,8 +1,10 @@
 # The Hours
 
 Personal portfolio for Abhishek Verma. A static site whose organising idea is
-the passage of time: the sky is the page's ground, and it advances from first
-light to dusk as you read.
+the passage of time: the sky is the page's ground, and the theme chooses which
+hours you are visiting — light runs first light to last light, dark runs dusk
+to before dawn. The sky itself is static per theme; day and night are two
+authored palettes rather than a scroll animation.
 
 Zero runtime dependencies ship to the browser — no framework runtime, no
 animation library, no third-party requests.

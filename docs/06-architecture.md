@@ -16,56 +16,53 @@ personalisation.
 
 ## 2. Repository layout
 
+Regenerated from the repository as built (D-063). The version this replaced was
+the milestone plan and had drifted badly — it listed four scripts that no longer
+exist, a case-study route that was never built, and three illustration
+directories that were never created.
+
 ```
 portfolio/
 ├── README.md               what it is, how to run it
-├── RUNBOOK.md              exact commands + last-known-good toolchain (D-019)
+├── RUNBOOK.md              exact commands, toolchain, fonts, CSP, the form
 ├── .nvmrc                  pinned Node, matched in CI
-├── astro.config.mjs
+├── astro.config.mjs        static output, no adapter, dev toolbar off
+├── playwright.config.ts    port 4331, no reuse, serves dist (D-045)
+├── scripts/                build and gate tooling, plain Node
+│   ├── check-tokens.mjs    fails the build on a colour literal (D-013)
+│   ├── csp-headers.mjs     inline-script hashes + form origin → dist/_headers
+│   ├── content-status.mjs  lists everything still marked PROVISIONAL
+│   └── serve.mjs           dependency-free static server for dist
 ├── public/
-│   ├── _headers            CSP and security headers (D-018)
-│   ├── fonts/              self-hosted, subset — no third-party origin
-│   ├── audio/              opt-in track + LICENCE.txt (D-010)
-│   ├── resume.pdf
-│   └── og/                 generated social cards
+│   ├── _headers            CSP template with two placeholders
+│   ├── theme-init.js       stamps data-theme before first paint (D-018)
+│   └── fonts/              four faces, self-hosted, subset
 ├── src/
 │   ├── pages/
-│   │   ├── index.astro         the seven sections
-│   │   ├── work/[slug].astro   case-study route (reserved, D-005)
+│   │   ├── index.astro     the section order, and the reasoning for it
 │   │   └── 404.astro
-│   ├── layouts/Base.astro      html shell, head, theme pre-paint, skip link
-│   ├── sections/               one component per IA entry — seven files
-│   ├── components/             Card, Timeline, Chip, ThemeToggle, AudioToggle,
-│   │                           Marker, SectionHeading
-│   ├── illustration/
-│   │   ├── Sky.astro           gradient + orb + arc + stars
-│   │   ├── Ridges.astro        three bands
-│   │   ├── spots/              mug, plant, plane, books…
-│   │   ├── desk/               the single interior
-│   │   ├── plates/             per-project diagrams
-│   │   └── primitives/         Node, Ring, Link, Callout, Frame
+│   ├── layouts/Base.astro  html shell, head, bar, footer, the one script tag
+│   ├── sections/           Hero · Stats · HeroActions · Work · Skills ·
+│   │                       Experience · Contact
+│   ├── components/         Nav · Social · ThemeToggle · AudioToggle ·
+│   │                       OffTheClock
+│   ├── illustration/       Sky · Ridges · Character · ProjectShot
 │   ├── styles/
-│   │   ├── tokens.css          both palettes, type scale, spacing, motion
-│   │   ├── base.css            reset, elements, layout primitives
-│   │   └── motion.css          all keyframes + the reduced-motion variant
-│   ├── scripts/
-│   │   ├── hours.ts            scroll → sky tokens  (~40 lines)
-│   │   ├── theme.ts            pre-paint set + toggle + persistence
-│   │   ├── reveal.ts           IntersectionObserver stagger
-│   │   └── audio.ts            opt-in, lazy fetch, pause on hidden
+│   │   ├── tokens.css      both palettes, type scale, spacing, motion
+│   │   ├── fonts.css       the four @font-face rules
+│   │   ├── base.css        reset, elements, layout primitives, .rm-cloud
+│   │   └── motion.css      all keyframes + the reduced-motion variant
+│   ├── scripts/            behaviour — see §5
+│   ├── content.config.ts   Zod schemas with word budgets — the contract
 │   ├── content/
-│   │   ├── config.ts           Zod schemas — the content contract
-│   │   ├── projects/
-│   │   └── roles/
-│   └── data/                   now.ts, shelf.ts, principles.ts, site.ts
-├── tests/
-│   ├── a11y.spec.ts
-│   ├── contrast.spec.ts        sampled across scroll positions, both themes
-│   ├── nojs.spec.ts
-│   └── budget.spec.ts
+│   │   ├── projects/       three
+│   │   └── roles/          three
+│   ├── data/               site.ts · stats.ts · skills.ts · play.ts
+│   └── lib/                assets.ts (does this link exist?) · format.ts
+├── tests/                  eight specs — see §9
 └── .github/workflows/
-    ├── ci.yml                  build · check · test · lighthouse
-    └── rot-check.yml           monthly scheduled build (D-019)
+    ├── ci.yml              check · gate:tokens · build · test
+    └── rot-check.yml       monthly scheduled build (D-019)
 ```
 
 ## 3. Component boundaries
@@ -126,17 +123,29 @@ checked mechanically instead of being remembered.
 `src/data/` holds the smaller, non-collection content — `now`, shelf objects,
 principles, site metadata — as typed TypeScript modules.
 
-## 5. The four scripts, in full
+## 5. The scripts, in full
 
-Total shipped JavaScript budget: **< 8 KB compressed**.
+One bundle, one entry: `scripts/main.ts` imports every behaviour and calls it.
+Separate `<script>` blocks would mean a bundle and a CSP hash each, on every
+build, for behaviour that always runs together (D-035). `ThemeToggle.astro` is
+the single exception and keeps its own, because it has to agree with
+`public/theme-init.js`, which runs before first paint.
 
-| Module | Job | Notes |
-|---|---|---|
-| `theme.ts` | Read stored preference or OS setting, stamp `data-theme` **before first paint**, handle the toggle, persist. | The pre-paint portion is inlined in `<head>` and admitted to the CSP by hash. Everything else defers. |
-| ~~`hours.ts`~~ | **Removed (D-027).** The sky is static per theme, so there is no scroll listener at all. |
-| `reveal.ts` | IntersectionObserver, adds `.is-in` with a staggered delay, unobserves. | `threshold: 0` — a fractional threshold can strand content taller than the viewport (D-028). Under reduced motion it reveals everything and never observes. |
-| `liveliness.ts` | Section handoff marker, and pointer-tracked light on cards. | Both absent under reduced motion; the light is also absent on touch. |
-| `audio.ts` | Opt-in toggle, **lazy fetch on first activation**, persist preference, pause on `visibilitychange`. | The audio file is never in the initial payload. |
+| Module | Job |
+|---|---|
+| `reveal.ts` | IntersectionObserver stagger; adds `.is-in`, then unobserves. `threshold: 0` — a fractional threshold strands content taller than the viewport (D-028). Under reduced motion it reveals everything and observes nothing. |
+| `nav.ts` | The header's active shortcut. The current section is the last one whose top has passed `scroll-margin-top`, read off the CSS at runtime (D-057). |
+| `roadmap.ts` | Draws the Experience rail *after* layout, threading a spline through the blocks' measured anchors. Redraws on resize and after web fonts land, debounced once for both (D-063). |
+| `shelf.ts` | Work's state only: which leaf is open, which books are off the shelf, what the reading slot says. Creates no elements (D-047). |
+| `open-line.ts` | The Contact thread. Starts where the roadmap's `now` marker ended, becomes the address's rule, and hangs its endpoint below when there is no room beside it (D-058, D-059). |
+| `contact-form.ts` | Background POST to the form provider, so the reader stays on the page. Marks the form `data-enhanced` when it binds. Reads the provider's `success` field, not just the status code (D-060). |
+| `off-the-clock.ts` | The easter egg behind the moon. Resolves a click on the orb by geometry, because the orb is `pointer-events: none` behind every section (D-061). Night only (D-062). |
+| `rotator.ts` | The typed role line. Self-rescheduling timeout, four phases, four durations. Absent under reduced motion — the first role is already in the markup. |
+| `character.ts` | The figure sleeps off screen and wakes when observed. Awake is the markup default, so this only ever *adds* the sleeping state. |
+
+Deleted along the way: `hours.ts` (D-027, the sky is static per theme, so there
+is no scroll listener), `timeline.ts` (D-046), and `pointer-light.ts` (D-063 —
+nothing has carried `data-lit` since Work became the book and shelf).
 
 No module imports another. Any one can be deleted and the site still works —
 degraded, but correct. That is the property that makes it maintainable.

@@ -330,10 +330,15 @@ export function roadmap(): void {
      every anchor the rail was drawn through. */
   document.fonts?.ready.then(draw);
 
+  /* One debounce for both signals. The observer used to call `draw` directly
+     while the resize listener debounced it, so dragging a window edge ran the
+     full measure-and-redraw on every observed frame *and* again 120ms later.
+     `draw` reads every block's box; it is not something to run per frame. */
   let t: number | undefined;
-  window.addEventListener('resize', () => {
+  const redraw = (): void => {
     window.clearTimeout(t);
     t = window.setTimeout(draw, 120);
-  });
-  if ('ResizeObserver' in window) new ResizeObserver(() => draw()).observe(root);
+  };
+  window.addEventListener('resize', redraw, { passive: true });
+  if ('ResizeObserver' in window) new ResizeObserver(redraw).observe(root);
 }

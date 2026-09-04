@@ -33,7 +33,7 @@
 @property --surface-solid { syntax: '<color>'; inherits: true; initial-value: #EDF1F3; }
 @property --edge          { syntax: '<color>'; inherits: true; initial-value: rgba(28,39,48,.13); }
 @property --accent        { syntax: '<color>'; inherits: true; initial-value: #8A5E2A; }
-@property --accent-soft   { syntax: '<color>'; inherits: true; initial-value: rgba(138,94,42,.13); }
+@property --accent-soft   { syntax: '<color>'; inherits: true; initial-value: rgba(138,94,42,.06); }
 @property --on-accent     { syntax: '<color>'; inherits: true; initial-value: #FCF8F2; }
 @property --skin          { syntax: '<color>'; inherits: true; initial-value: #D2A078; }
 @property --skin-shade    { syntax: '<color>'; inherits: true; initial-value: #B07C55; }
@@ -67,7 +67,9 @@
   --surface-solid:#EDF1F3;             /* no-JS / no-sky fallback ground */
   --edge:rgba(28,39,48,.13);
   --accent:#8A5E2A;
-  --accent-soft:rgba(138,94,42,.13);
+  --accent-soft:rgba(138,94,42,.06);  /* .06, not .13: at .13 the chips
+                                     put --accent at 4.24-4.41:1 over the
+                                     ridges by day, under the 4.5 bar (D-063) */
   --on-accent:#FCF8F2;         /* text on a solid --accent fill */
 
   /* ---- the avatar. Decorative and aria-hidden, but it is themed like

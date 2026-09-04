@@ -194,7 +194,13 @@ button {
      own bottom margin and fight the authored gaps between stops. */
   box-sizing: content-box;
   padding: 38px 44px;
-  margin-inline: -44px;
+  /* The bleed may never exceed the padding it is bleeding into. `.band` sets
+     `clamp(1.25rem, 5vw, 4rem)` inline, which is under 44px on everything
+     narrower than ~880px — so between the mobile trim at 760 and that point,
+     a right-hand block hung 6px off the side of the page and took the whole
+     document sideways with it (D-063). Above 880 this resolves to -44px and
+     nothing changes. */
+  margin-inline: calc(-1 * min(44px, clamp(1.25rem, 5vw, 4rem)));
   background-color: var(--sheet);
   -webkit-mask-image:
     radial-gradient(50% 50% at 50% 50%, var(--lobe)),
@@ -259,8 +265,12 @@ button {
   border-radius: 999px;
   text-decoration: none;
   background: var(--surface);
+  /* Only the standard property. lightningcss collapses a prefixed/unprefixed
+     pair into whichever is written **last**, so hand-writing -webkit- after it
+     deleted the one every current browser reads and shipped Safari's alias
+     alone — no blur in Chrome or Firefox, anywhere on the site. It adds the
+     prefix itself when the build targets need one (D-063). */
   backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
   transition: border-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
 .action:hover { border-color: var(--accent); }

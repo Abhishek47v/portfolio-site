@@ -1931,3 +1931,79 @@ fail for the right behaviour. Its axe check drops to the one theme for the same
 reason. `off-the-clock.spec.ts` gains the assertion that matters most here:
 clicking the sun by day leaves the panel not merely closed but **never opened**,
 and a panel opened at night closes when the day comes back.
+
+---
+
+## D-063 — A review pass: four defects, two of them invisible
+
+**Context:** a full sweep after the feature work — bugs, dead code, structure.
+Everything below is verified, and the suite went from 25/28 with two known
+failures to **28/28 with `npm run check` clean**, which it had not been.
+
+**1. `backdrop-filter` had never rendered in Chrome or Firefox — anywhere.**
+Every one of the three declarations on the site (`.bar`, `.action`, and the
+easter egg's cloud) was written as the standard property followed by the
+`-webkit-` alias. lightningcss collapses that pair into **one** declaration and
+keeps whichever is written *last*, so what shipped was Safari's alias alone and
+nothing else. The header bar's blur is documented, was intended from the start,
+and has been silently absent the whole time; `getComputedStyle(bar)
+.backdropFilter` returned `none`, which is how it was finally caught.
+
+The fix is to write only the standard property and let lightningcss add a prefix
+if its targets need one. Confirmed both ways against lightningcss directly:
+standard-then-prefixed yields the prefixed one alone, prefixed-then-standard
+yields the standard one alone. **This is a visible change** — the bar now blurs
+what scrolls under it, as it was always meant to.
+
+**2. `hidden` on an SVG element does nothing, and the easter egg did it twice.**
+`hidden` is defined on `HTMLElement`, not `SVGElement`, so `thread.hidden =
+false` set an expando property and never touched the attribute. The thread was
+visible anyway — its path is `opacity: 0` until `.is-open` — so it looked
+correct while the mechanism was inert. `ThemeToggle.astro` has carried a note
+about this exact trap since D-036; it was not enough to stop it happening again.
+The SVG now starts empty and is emptied on close, which is what "hidden" meant.
+Caught by `astro check`, not by a test.
+
+**3. `pointer-light.ts` was dead.** Nothing has carried `data-lit` since Work
+became the book and shelf (D-047), and no rule reads `--lit-x`. It was imported
+and called on every page load to iterate an empty NodeList. Deleted. It was also
+the one script doing an unthrottled `getBoundingClientRect` inside a
+`pointermove` handler, so its removal takes a forced-reflow-per-mousemove with
+it.
+
+**4. The two failures that were open are closed.**
+- **Chips.** `--accent-soft` .13 → .06 in the light palette only; measured, and
+  the ridge probe now passes in both themes. It also lightens `ProjectShot`'s
+  placeholder panel, which is a placeholder.
+- **Tablet overflow.** `.rm-cloud` bled `-44px` into `.band`'s inline padding,
+  which is `clamp(1.25rem, 5vw, 4rem)` and therefore under 44px below ~880px:
+  the education stop hung 6px off the right at 768 and 2px at 834, taking the
+  document sideways. The bleed is now `min(44px, <that same clamp>)`, so it can
+  never exceed the padding it is bleeding into and is unchanged above 880.
+
+**Also fixed, smaller:**
+- `open-line.ts` had a `void`-declared arrow returning a boolean — one of four
+  errors that made `npm run check`, and therefore CI, fail.
+- `roadmap.ts` ran `draw()` directly from a `ResizeObserver` *and* through a
+  120ms debounce on `resize`. Dragging a window edge ran the full
+  measure-and-redraw every observed frame. One debounce now serves both.
+- The `Instrument Serif` italic `@font-face` and its 15KB file are gone. Nothing
+  has matched that face since D-040; the only italic on the site is Karla's,
+  which is a real face (D-055).
+
+**Structure:** the easter egg's 150 lines moved from an inline component script
+to `scripts/off-the-clock.ts`, called from `main.ts` like every other behaviour.
+That restores the rule `main.ts` claims — one bundle, one entry — and takes the
+build's inline-script hashes from two back to one. `ThemeToggle` keeps its own
+script and now says why: it is the only behaviour that has to agree with
+`theme-init.js`, which runs before first paint.
+
+**Documentation that had rotted:** `docs/06-architecture.md` §2 listed four
+scripts that no longer exist, a case-study route never built and three
+illustration directories never created; §5 described "the four scripts" when
+there are nine. Both regenerated from the repository. `README.md` still told
+readers the sky "advances from first light to dusk as you read", which D-027
+removed — the sky is static per theme.
+
+**Shipped weight, measured:** 15,976 bytes of JavaScript, **5,856 gzipped**,
+plus 361 for the pre-paint theme file. The §5 budget is 8KB compressed.

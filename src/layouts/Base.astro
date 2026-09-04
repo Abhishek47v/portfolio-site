@@ -107,8 +107,9 @@ const hasAudio = hasPublicFile(site.audio);
         z-index: 20;
         background: var(--surface);
         border-bottom: 1px solid var(--edge);
+        /* Standard property only — see D-063: hand-writing the -webkit-
+           alias after it made lightningcss drop this one entirely. */
         backdrop-filter: blur(12px) saturate(115%);
-        -webkit-backdrop-filter: blur(12px) saturate(115%);
       }
       .bar-inner {
         display: flex;
