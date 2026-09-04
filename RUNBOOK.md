@@ -90,6 +90,75 @@ Two things the site links to only when they exist. `src/lib/assets.ts` checks
 No file means no link and no shipped JavaScript for it — the audio component is
 not rendered at all, so its script is never bundled.
 
+## The contact form
+
+The site is static and cannot send mail, so the form posts to a provider that
+does. **Which inbox it lands in is configured at the provider, never in this
+repository** — the address would otherwise be in the page source of a public
+site for every scraper to read (D-054).
+
+Nothing renders as broken while this is unset: the submit is disabled at build
+time, the page says *Not connected yet*, `form-action` stays shut in the CSP,
+and `tests/contact-form.spec.ts` skips.
+
+### Web3Forms — the recommended one
+
+250 submissions a month, free, and **no account to create**: you give them an
+address, they mail you a key.
+
+1. Go to <https://web3forms.com>, enter the destination address, and collect the
+   access key from that inbox.
+2. Put both values in `src/data/site.ts`:
+
+   ```ts
+   contact: {
+     endpoint: 'https://api.web3forms.com/submit',
+     fields: { access_key: 'the-key-they-mailed-you' },
+   },
+   ```
+
+3. `npm run build && npm test`. The build prints
+   `form origin https://api.web3forms.com` — that is the CSP being opened for
+   exactly that host and nothing else — and the two form tests stop skipping.
+
+The access key is public by design and it is not the address: it identifies the
+form, and the inbox is bound to it at Web3Forms. Losing it costs you spam, not
+your mailbox.
+
+### Formspree — the alternative
+
+50 submissions a month and an account, but nothing at all in the page source:
+the form id is the endpoint.
+
+```ts
+contact: { endpoint: 'https://formspree.io/f/<id>', fields: {} },
+```
+
+### What is already handled
+
+- **A subject and a honeypot**, named the way Web3Forms names them: `subject`
+  and `botcheck`. Formspree calls the same two `_subject` and `_gotcha`, so
+  switching means renaming them in `Contact.astro`. They are not both shipped:
+  Web3Forms copies every field it receives into the email, so the unused pair
+  arrived as a duplicated subject line and a blank row in every message.
+- **Spam.** A hidden honeypot both providers refuse a submission for; their own
+  filtering behind that.
+- **No JavaScript.** The form is a real `POST`, so it works with scripts off —
+  the visitor lands on the provider's thank-you page instead of staying put.
+- **A refusal is not a send.** These providers answer `200` with
+  `{ success: false }`; the status line reports that as a failure and keeps
+  what was typed.
+- **The CSP follows the endpoint.** `scripts/csp-headers.mjs` reads it at build
+  time and opens `connect-src` and `form-action` to that origin only. It fails
+  the build on a malformed URL.
+
+### If mail stops arriving
+
+Check the provider's dashboard first — the free tiers cap at 250 (Web3Forms) and
+50 (Formspree) submissions a month and simply stop. Then check the browser
+console for a CSP violation, which means the endpoint changed origin without a
+rebuild.
+
 ## Deploy
 
 Cloudflare Pages, connected to `main`.

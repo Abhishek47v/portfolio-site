@@ -21,6 +21,15 @@ const MESSAGES = {
   failed: 'That did not send. Email works.',
 } as const;
 
+/* Providers in this class answer 200 with `{ success: false }` as readily as
+   they answer 4xx, so the status code alone is not the answer. Anything that
+   is not JSON, or JSON without the field, is judged by the status code. */
+async function accepted(res: Response): Promise<boolean> {
+  if (!res.ok) return false;
+  const body = (await res.json().catch(() => null)) as { success?: boolean } | null;
+  return body?.success !== false;
+}
+
 export function contactForm(): void {
   const form = document.querySelector<HTMLFormElement>('[data-contact-form]');
   if (!form) return;
@@ -35,6 +44,13 @@ export function contactForm(): void {
   const say = (text: string): void => {
     if (note) note.textContent = text;
   };
+
+  /* Says the enhancement is live. Until this lands the form is still a plain
+     `<form method="POST">`, and a submit navigates to the provider — correct
+     behaviour, but it means "click submit" is two different features depending
+     on when you click. tests/contact-form.spec.ts waits for this rather than
+     racing it, which is a race it lost about one run in six. */
+  form.setAttribute('data-enhanced', '');
 
   form.addEventListener('submit', (event) => {
     // Let the browser's own validation run first; only take over a valid form,
@@ -53,8 +69,8 @@ export function contactForm(): void {
       body: new FormData(form),
       headers: { Accept: 'application/json' },
     })
-      .then((res) => {
-        if (!res.ok) throw new Error(String(res.status));
+      .then(async (res) => {
+        if (!(await accepted(res))) throw new Error(String(res.status));
         form.reset();
         say(MESSAGES.sent);
       })

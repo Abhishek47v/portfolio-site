@@ -92,7 +92,11 @@ const clouds = [
   ))}
 </div>
 
-<div class="orb" aria-hidden="true"></div>
+<!-- data-orb: components/OffTheClock.astro reads this element's box to know
+     where the sun is. It stays decorative and untouchable — the disc is behind
+     every section (z-index -3) and cannot receive a click, so that component
+     works out for itself whether a click landed on it (D-061). -->
+<div class="orb" data-orb aria-hidden="true"></div>
 
 <style>
   .sky {

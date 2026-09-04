@@ -143,7 +143,11 @@ const probe = `(() => {
     // its status line and the filled button (whose own ground groundAt reads)
     '.contact .field label', '.contact .field input', '.contact .field textarea',
     '.contact .form-note', '.contact .form button',
-    '.colophon', '.colophon a'
+    '.colophon', '.colophon a',
+    // The easter egg's cloud (D-061). It is fixed, so it is on screen at every
+    // scroll position below, and it puts .62rem labels over the sky — exactly
+    // what this file exists for. The test opens it before sampling.
+    '.oc .label', '.oc-intro', '.oc-row dt', '.oc-row dd', '.oc-hours span'
   ].join(', ');
   for (const el of document.querySelectorAll(SELECTOR)) {
     const r = el.getBoundingClientRect();
@@ -165,7 +169,13 @@ const probe = `(() => {
       }
     }
     if (worst === Infinity) continue;
-    out.push({ text: el.textContent.trim().slice(0, 42), large, ratio: +worst.toFixed(2), at });
+    out.push({
+      text: el.textContent.trim().slice(0, 42),
+      // So the assertion below can prove this probe actually reached the one
+      // thing on the page that has to be opened before it can be measured.
+      egg: !!el.closest('[data-oc]'),
+      large, ratio: +worst.toFixed(2), at,
+    });
   }
   return out;
 })()`;
@@ -175,8 +185,20 @@ for (const theme of THEMES) {
     await page.goto('/');
     await page.evaluate((t) => document.documentElement.setAttribute('data-theme', t), theme);
 
+    /* Open the easter egg (D-061), which is otherwise never on the page. It is
+       reached by clicking the orb, and the orb is behind every section, so the
+       click is resolved by geometry — which means clicking its centre is the
+       real interaction and not a shortcut around one. */
+    const orb = await page.evaluate(() => {
+      const r = document.querySelector('[data-orb]')!.getBoundingClientRect();
+      return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+    });
+    await page.mouse.click(orb.x, orb.y);
+    await expect(page.locator('[data-oc]')).toBeVisible();
+
     const failures: string[] = [];
     let sampled = 0;
+    let sampledEgg = 0;
 
     for (const pos of POSITIONS) {
       /* `behavior: 'instant'`, and it matters. base.css sets
@@ -193,8 +215,9 @@ for (const theme of THEMES) {
       await page.waitForTimeout(90);
 
       const rows = (await page.evaluate(probe)) as
-        { text: string; large: boolean; ratio: number; at: [number, number] }[];
+        { text: string; egg: boolean; large: boolean; ratio: number; at: [number, number] }[];
       sampled += rows.length;
+      sampledEgg += rows.filter((r) => r.egg).length;
 
       for (const r of rows) {
         const min = r.large ? 3 : 4.5;
@@ -207,6 +230,10 @@ for (const theme of THEMES) {
     // The failure this whole file exists to prevent is a probe that sees
     // nothing and reports success.
     expect(sampled, 'the probe never found any bare-sky text').toBeGreaterThan(0);
+    // A gate that silently stops seeing something is the failure this file was
+    // written about twice over. The egg is the one element here behind an
+    // interaction, so it is the one most able to disappear unnoticed.
+    expect(sampledEgg, 'the easter egg panel was never sampled').toBeGreaterThan(0);
     expect(failures, failures.join('\n')).toEqual([]);
   });
 }

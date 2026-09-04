@@ -1,0 +1,393 @@
+---
+/**
+ * Off the clock — the one thing on this site that is not about work (D-061).
+ *
+ * **Click the sun.** Or the moon; it is the same disc. Nothing announces it,
+ * nothing is drawn around it, and the only way to find it is to wonder whether
+ * the celestial object does anything. It does: a cloud forms under it on a
+ * thread and tells you what is behind the work.
+ *
+ * It could not be a button. `.orb` is `pointer-events: none` at `z-index: -3`,
+ * behind every section on the page — putting a hit area over it would mean a
+ * fixed invisible disc in the top-right corner eating clicks meant for whatever
+ * scrolled under it. So the click is resolved by geometry instead: a listener
+ * on the document asks whether the point is inside the orb's circle. The page
+ * is untouched, nothing is blocked, and a link that happens to be under the sun
+ * still behaves like a link.
+ *
+ * The cloud and the thread are the page's own two devices — the ground that
+ * carries text over the sky, and the line that arrives from somewhere (D-051).
+ * Nothing here is new visual language; it is the existing world, used once more.
+ *
+ * Content is `src/data/play.ts` and is meant to be edited.
+ *
+ * Keyboard: **hold Enter or Space on the theme control.** The orb is a
+ * decoration and cannot be in the tab order without announcing itself, so the
+ * one other object on the page that is also the sun and the moon carries the
+ * pointer-free route. A held key does nothing there otherwise.
+ */
+import { play } from '../data/play';
+
+/* Sorted here rather than in the data, so that file stays a list someone can
+   add a line to without thinking about order. */
+const sunk = [...play.sunk].sort((a, b) => b.hours - a.hours);
+const hours = (n: number): string => n.toLocaleString('en-US');
+---
+
+<!-- The thread, drawn by the script once it knows where the orb and the cloud
+     ended up. Fixed and untouchable, like the sky it hangs in. -->
+<svg class="oc-thread" data-oc-thread aria-hidden="true" focusable="false" hidden></svg>
+
+<!-- role=group, not region: a landmark would list this in every screen
+     reader's landmark menu, which is the opposite of hidden. -->
+<div class="oc" data-oc hidden tabindex="-1" role="group" aria-labelledby="oc-title">
+  <p class="label oc-title" id="oc-title">Off the clock</p>
+  <p class="oc-intro">{play.intro}</p>
+
+  <dl class="oc-list">
+    <div class="oc-row">
+      <dt class="mono">Now playing</dt>
+      <dd>
+        {play.now.title}
+        {play.now.note && <span class="oc-note">{play.now.note}</span>}
+      </dd>
+    </div>
+
+    {play.favourites.length > 0 && (
+      <div class="oc-row">
+        <dt class="mono">Never uninstalled</dt>
+        <dd>{play.favourites.join(' · ')}</dd>
+      </div>
+    )}
+
+    {sunk.length > 0 && (
+      <div class="oc-row">
+        <dt class="mono">Hours I will not get back</dt>
+        <dd>
+          <ul class="oc-hours">
+            {sunk.map((g) => (
+              <li><span>{g.title}</span><span class="tabular">{hours(g.hours)} h</span></li>
+            ))}
+          </ul>
+        </dd>
+      </div>
+    )}
+  </dl>
+
+  <!-- The only drawing in here, in the same hairline as the sun's own rays and
+       every rail on the page. -->
+  <svg class="oc-mark" viewBox="0 0 32 20" aria-hidden="true" focusable="false">
+    <path d="M10.5 4.5h11c2.3 0 4.1 1.5 4.6 3.7l1.2 5.2c.4 1.9-1 3.6-2.8 3.6-.9 0-1.7-.4-2.2-1.2l-1.6-2.3H11.3l-1.6 2.3c-.5.8-1.3 1.2-2.2 1.2-1.8 0-3.2-1.7-2.8-3.6l1.2-5.2C6.4 6 8.2 4.5 10.5 4.5Z" />
+    <path d="M9.6 8.6v2.6M8.3 9.9h2.6" />
+    <circle cx="21.6" cy="9.2" r=".95" />
+    <circle cx="23.9" cy="11.3" r=".95" />
+  </svg>
+</div>
+
+<style>
+  /* ---- the cloud ----
+     Not a card. The page has no cards (D-030, D-052) and this hangs over the
+     sky, so it takes the ground the roadmap's blocks take and the same lobed
+     mask dissolves its edges.
+
+     It is not `.rm-cloud` itself: that class carries a section heading's
+     38/44px padding and a -44px bleed, which on a 336px panel would leave no
+     room for words. Same nine lobes, panel-sized — if those are ever retuned
+     in base.css, retune these; they are the same cloud.
+
+     INVARIANT, inherited with the technique: the mask's opaque core must cover
+     the padding box. The core reaches 39% of the box from its centre, so the
+     34px padding below is ~10% on every side and text lands inside it. Shrink
+     the padding and the last character of a row starts dissolving. */
+  .oc {
+    --lobe: currentColor 0%, currentColor 78%, transparent 100%;
+    position: fixed;
+    /* placed by the script, under the orb */
+    top: 0;
+    left: 0;
+    width: min(21rem, calc(100vw - 2rem));
+    box-sizing: border-box;
+    padding: 34px;
+    z-index: 25;
+    background-color: var(--sheet);
+    /* The same treatment the header bar uses: this hangs over the page rather
+       than over empty sky, and on a phone it lands squarely on the hero, where
+       --sheet alone leaves the name legible *through* the cloud.
+
+       It does not render in Chrome today, and neither does the bar's. The
+       build emits **only** the -webkit- prefixed property — all three
+       backdrop-filters in the site come out that way — so the standard one
+       browsers actually read is gone by the time it ships. Left declared
+       because it is correct, it works in Safari, and it starts working
+       everywhere the day that is fixed. Do not treat the blur as load-bearing
+       until then: the panel has to be legible without it, and it is. */
+    backdrop-filter: blur(8px) saturate(115%);
+    -webkit-backdrop-filter: blur(8px) saturate(115%);
+    text-align: left;
+    -webkit-mask-image:
+      radial-gradient(50% 50% at 50% 50%, var(--lobe)),
+      radial-gradient(18% 20% at 18% 20%, var(--lobe)),
+      radial-gradient(18% 20% at 82% 20%, var(--lobe)),
+      radial-gradient(18% 20% at 18% 80%, var(--lobe)),
+      radial-gradient(18% 20% at 82% 80%, var(--lobe)),
+      radial-gradient(16% 34% at 16% 50%, var(--lobe)),
+      radial-gradient(16% 34% at 84% 50%, var(--lobe)),
+      radial-gradient(34% 18% at 50% 18%, var(--lobe)),
+      radial-gradient(34% 18% at 50% 82%, var(--lobe));
+    mask-image:
+      radial-gradient(50% 50% at 50% 50%, var(--lobe)),
+      radial-gradient(18% 20% at 18% 20%, var(--lobe)),
+      radial-gradient(18% 20% at 82% 20%, var(--lobe)),
+      radial-gradient(18% 20% at 18% 80%, var(--lobe)),
+      radial-gradient(18% 20% at 82% 80%, var(--lobe)),
+      radial-gradient(16% 34% at 16% 50%, var(--lobe)),
+      radial-gradient(16% 34% at 84% 50%, var(--lobe)),
+      radial-gradient(34% 18% at 50% 18%, var(--lobe)),
+      radial-gradient(34% 18% at 50% 82%, var(--lobe));
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    /* It arrives the way a cloud does. */
+    opacity: 0;
+    translate: 0 -8px;
+    transition: opacity var(--dur-fast) var(--ease), translate var(--dur-fast) var(--ease);
+  }
+  .oc.is-open { opacity: 1; translate: 0 0; }
+  .oc:focus-visible { outline: none; }
+
+  .oc-title { color: var(--ink); }
+  .oc-intro {
+    margin: var(--s-3) 0 var(--s-4);
+    max-width: none;
+    font-size: .88rem;
+    line-height: 1.5;
+    color: var(--ink-soft);
+  }
+
+  .oc-list { margin: 0; padding: 0; display: grid; gap: 11px; }
+  /* The hairline is the site's own divider — the same one under a form field. */
+  .oc-row { padding-top: 11px; border-top: 1px solid var(--edge); }
+  .oc-row dt {
+    font-size: .62rem;
+    text-transform: uppercase;
+    letter-spacing: .15em;
+    color: var(--ink-faint);
+  }
+  .oc-row dd {
+    margin: 5px 0 0;
+    font-size: .9rem;
+    line-height: 1.45;
+    color: var(--ink);
+  }
+  .oc-note { display: block; font-size: .82rem; color: var(--ink-soft); }
+
+  .oc-hours { margin: 0; padding: 0; list-style: none; display: grid; gap: 3px; }
+  .oc-hours li {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--s-4);
+    max-width: none;
+  }
+  .oc-hours span:last-child {
+    font-family: var(--font-mono);
+    font-size: .78rem;
+    color: var(--ink-soft);
+  }
+
+  .oc-mark {
+    display: block;
+    width: 34px;
+    height: auto;
+    margin-top: var(--s-4);
+    fill: none;
+    stroke: var(--ink-faint);
+    stroke-width: 1.3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* ---- the thread ----
+     The same line that arrives at Contact, doing the same job: saying that
+     these two things are connected. Dashed, because it is a thread and not a
+     border. Created by script, so :global — component CSS is scoped at build
+     time and a runtime node never carries the attribute (D-046). */
+  .oc-thread {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 24;
+    pointer-events: none;
+    overflow: visible;
+  }
+  .oc-thread :global(path) {
+    fill: none;
+    stroke: var(--ink-faint);
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-dasharray: 3 7;
+    opacity: 0;
+    transition: opacity var(--dur-fast) var(--ease);
+  }
+  .oc-thread.is-open :global(path) { opacity: .7; }
+
+  @media (max-width: 560px) {
+    /* The orb sits close to the corner on a phone; the cloud takes the width
+       it can get and the thread simply gets shorter. */
+    .oc { padding: 28px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .oc { transition: opacity var(--dur-fast) var(--ease); translate: none; }
+  }
+</style>
+
+<script>
+  /**
+   * Opening and closing the one thing on this page that is not about work.
+   *
+   * Everything here is measured at open time: the orb's position is a clamp()
+   * of viewport width and height, and the cloud has to find it wherever it is.
+   */
+  const orb = document.querySelector<HTMLElement>('[data-orb]');
+  const panel = document.querySelector<HTMLElement>('[data-oc]');
+  const thread = document.querySelector<SVGSVGElement>('[data-oc-thread]');
+  const toggle = document.querySelector<HTMLButtonElement>('[data-theme-toggle]');
+
+  if (orb && panel && thread) {
+    const NS = 'http://www.w3.org/2000/svg';
+    const CLOSE_ANIM = 240; // --dur-fast; only used to delay `hidden`
+    const GAP = 30; // between the orb's edge and the top of the cloud
+    let open = false;
+    let opener: HTMLElement | null = null;
+
+    /** The orb is a circle; its box is a square. */
+    function onOrb(x: number, y: number): boolean {
+      const r = orb!.getBoundingClientRect();
+      if (!r.width) return false;
+      return Math.hypot(x - (r.left + r.width / 2), y - (r.top + r.height / 2)) <= r.width / 2;
+    }
+
+    /** Under the sun, and inside the viewport whatever the sun is doing. */
+    function place(): void {
+      const o = orb!.getBoundingClientRect();
+      const w = panel!.offsetWidth;
+      const margin = 12;
+      const left = Math.max(
+        margin,
+        Math.min(o.left + o.width / 2 - w / 2, window.innerWidth - w - margin),
+      );
+      const top = o.bottom + GAP;
+      panel!.style.left = `${Math.round(left)}px`;
+      panel!.style.top = `${Math.round(top)}px`;
+
+      // and the thread between them, leaving the disc and arriving at the cloud
+      const x1 = o.left + o.width / 2;
+      const y1 = o.bottom - 2;
+      const x2 = Math.round(left + w / 2);
+      const y2 = top + 10;
+      thread!.replaceChildren();
+      const path = document.createElementNS(NS, 'path');
+      path.setAttribute(
+        'd',
+        `M${x1} ${y1} C${x1} ${y1 + (y2 - y1) * 0.45} ${x2} ${y2 - (y2 - y1) * 0.5} ${x2} ${y2}`,
+      );
+      thread!.appendChild(path);
+    }
+
+    function show(from: HTMLElement | null): void {
+      if (open) return;
+      open = true;
+      opener = from;
+      panel!.hidden = false;
+      thread!.hidden = false;
+      place();
+      // A frame between `hidden` going away and the class arriving, or there is
+      // no earlier value to transition from — the same trap as the theme fade.
+      void panel!.offsetWidth;
+      panel!.classList.add('is-open');
+      thread!.classList.add('is-open');
+      toggle?.setAttribute('aria-expanded', 'true');
+      panel!.focus({ preventScroll: true });
+    }
+
+    function hide(returnFocus = false): void {
+      if (!open) return;
+      open = false;
+      panel!.classList.remove('is-open');
+      thread!.classList.remove('is-open');
+      // Removed rather than set to false: a control advertising a collapsed
+      // something is a control advertising the secret.
+      toggle?.removeAttribute('aria-expanded');
+      window.setTimeout(() => {
+        if (open) return;
+        panel!.hidden = true;
+        thread!.hidden = true;
+      }, CLOSE_ANIM);
+      if (returnFocus && opener) opener.focus();
+      opener = null;
+    }
+
+    /* The click. It is resolved by geometry rather than by a hit area, so a
+       link that happens to be under the sun still gets its own click — this
+       only claims the ones that would otherwise have done nothing. */
+    document.addEventListener('click', (e) => {
+      const el = e.target as Element | null;
+      if (open) {
+        if (!el?.closest('[data-oc]')) hide();
+        return;
+      }
+      if (!onOrb(e.clientX, e.clientY)) return;
+      if (el?.closest('a, button, input, textarea, select, label, summary')) return;
+      if ((window.getSelection()?.toString() ?? '').length) return;
+      show(null);
+    });
+
+    /* The pointer-free route. The orb cannot be focused without announcing
+       itself, so the theme control — the page's other sun and moon — opens it
+       when Space is *held*. A tap there is still only a theme change.
+
+       Space and not Enter, and that is not a preference: a button fires its
+       click on Enter **keydown**, so a held Enter would have flipped the theme
+       the instant the key went down and opened the panel 550ms later. Space
+       fires its click on keyup, which is late enough to be swallowed. */
+    const HOLD = 550;
+    let held = 0;
+    let swallow = false;
+
+    toggle?.addEventListener('keydown', (e) => {
+      if (e.key !== ' ' || e.repeat || open) return;
+      window.clearTimeout(held);
+      held = window.setTimeout(() => {
+        swallow = true;
+        show(toggle);
+      }, HOLD);
+    });
+    for (const ev of ['keyup', 'blur'] as const) {
+      toggle?.addEventListener(ev, () => window.clearTimeout(held));
+    }
+
+    /* Capture phase, on the document: ThemeToggle's own click listener is on
+       the button and this has to run first to stop it. Swallowing here keeps
+       that component untouched — it does not need to know this exists. */
+    document.addEventListener(
+      'click',
+      (e) => {
+        if (!swallow) return;
+        swallow = false;
+        if ((e.target as Element | null)?.closest('[data-theme-toggle]')) {
+          e.stopPropagation();
+          e.preventDefault();
+        }
+      },
+      true,
+    );
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && open) hide(true);
+    });
+
+    // The orb's position is a clamp() of the viewport, so it moves when the
+    // viewport does. Scrolling never moves it: the sky is fixed (D-027).
+    window.addEventListener('resize', () => { if (open) place(); }, { passive: true });
+  }
+</script>

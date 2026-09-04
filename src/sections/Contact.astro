@@ -97,6 +97,25 @@ const links = [
     >
       <p class="label form-head">Or send a message</p>
 
+      {/* What the provider needs and the reader never sees. `fields` carries
+          Web3Forms' public access_key.
+
+          Exactly these fields and no more: Web3Forms copies **every** field it
+          receives into the email, so Formspree's spellings (`_subject`,
+          `_gotcha`) shipped alongside meant a duplicated subject line and a
+          blank `_gotcha` row in every message that arrived. Switching provider
+          means changing these two names — RUNBOOK § the contact form. */}
+      {Object.entries(site.contact.fields).map(([name, value]) => (
+        <input type="hidden" name={name} value={value} />
+      ))}
+      <input type="hidden" name="subject" value={`New message from ${site.name}'s portfolio`} />
+
+      {/* The honeypot: `display: none`, so a person never sees it and a screen
+          reader never reaches it, while a bot that fills every field gives
+          itself away. A checkbox, because an unchecked one is not submitted at
+          all — so it costs nothing in the email that does arrive. */}
+      <input class="hp" type="checkbox" name="botcheck" tabindex="-1" autocomplete="off" />
+
       <p class="field">
         <label for="cf-name">Name</label>
         <input id="cf-name" name="name" type="text" autocomplete="name" required maxlength="80" />
@@ -188,6 +207,11 @@ const links = [
                 border-color var(--dur-fast) var(--ease);
   }
   .field textarea { resize: vertical; min-height: 5.5rem; line-height: 1.5; }
+
+  /* Not visually-hidden: the honeypot has to be invisible to assistive
+     technology too, or the one reader who cannot see it is the one who fills
+     it in. `display: none` also keeps it out of the tab order for free. */
+  .hp { display: none; }
 
   /* No outline ring on focus (D-057). A text field matches :focus-visible even
      when it was reached with a mouse, so the ring appeared on every click — a

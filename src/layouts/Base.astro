@@ -6,6 +6,7 @@ import '../styles/motion.css';
 import Sky from '../illustration/Sky.astro';
 import Ridges from '../illustration/Ridges.astro';
 import ThemeToggle from '../components/ThemeToggle.astro';
+import OffTheClock from '../components/OffTheClock.astro';
 import AudioToggle from '../components/AudioToggle.astro';
 import Nav from '../components/Nav.astro';
 import { site } from '../data/site';
@@ -72,6 +73,13 @@ const hasAudio = hasPublicFile(site.audio);
 
     <main id="main">
       <slot />
+
+      <!-- Nothing links here: it opens when someone clicks the sun (D-061).
+           It is `position: fixed` and hangs in the sky, so where it sits in the
+           document is invisible — but it has to sit *somewhere* inside a
+           landmark, or axe's `region` rule is right to call it orphaned page
+           content. Last inside main, after everything it is not part of. -->
+      <OffTheClock />
     </main>
 
     <!-- The last line of the page. data-reveal, so it arrives as you reach the

@@ -45,10 +45,24 @@ export const site = {
    * form-action and connect-src from this, so pasting a URL here is the only
    * change needed — see scripts/csp-headers.mjs.
    *
-   * PROVISIONAL.
    */
   contact: {
-    endpoint: '',
+    endpoint: 'https://api.web3forms.com/submit',
+    /**
+     * Hidden fields the provider requires, rendered as `<input type="hidden">`.
+     *
+     * Web3Forms identifies a form by a public `access_key` sent with the post:
+     * `fields: { access_key: '…' }`. Formspree needs none — the id is in the
+     * endpoint — so this stays empty for it. Either way the **inbox is bound to
+     * the key at the provider and is never written here**, which is the rule
+     * this whole arrangement exists to keep (D-054).
+     *
+     * A key here is not a secret. It is public by design, it identifies the
+     * form rather than authorising anything, and the worst it permits is
+     * someone posting to your form — which the honeypot and the provider's own
+     * spam filtering are for.
+     */
+    fields: { access_key: '568dfca8-a771-45da-8a52-2569b61c4755' } as Readonly<Record<string, string>>,
   },
   /** Social preview image, e.g. '/og/cover.png'. null omits the tags entirely
    *  rather than promising a card that does not exist. */

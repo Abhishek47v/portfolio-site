@@ -584,7 +584,7 @@ bottom of every capture. The built output contained zero references to it.
 **Cause:** a leftover Astro dev/preview daemon was still listening on port 4321
 and answering ahead of the static server the tests and screenshots believed they
 were using. Astro's preview daemonises (already recorded as a trap in the
-project's the project's local notes), so it survives the command that started it.
+project's local notes), so it survives the command that started it.
 
 **Why it matters beyond the cosmetic:** *the test suite may not have been running
 against the artifact being shipped.* Dev output differs from a build — different
@@ -832,7 +832,7 @@ that. Bare sky is a hero-only privilege on this page.
 probe composites ink over the *sky gradient* — `skyAt(fraction)` — and has no
 model of the ridge layer at all. It was not sampling a wrong value; it was
 confidently sampling the wrong background. A screenshot caught it, exactly as
-the note in the project's local notes says it will. This is the third time on this project
+the local notes say it will. This is the third time on this project
 that green has meant "the gate did not look" rather than "the design is sound".
 
 **Follow-up:** closed by D-041. The strip was subsequently moved back onto bare
@@ -1211,7 +1211,7 @@ inside `Experience.astro`, and Astro scopes component styles — so it would hav
 done nothing for Work, exactly as `.band--free` did nothing an hour earlier
 (D-047). It is now in `base.css`, where a class shared by two sections belongs.
 That is twice in one session that the same mistake produced the same silent
-failure; the rule is in the project's local notes as a trap.
+failure; the rule is recorded with the project's other traps.
 
 **Extra photos are a content capability, not a fixed slot.** `gallery` is a new
 optional field on the project schema: an array of `{ src, alt }` beyond the
@@ -1767,3 +1767,132 @@ site →". Asked for back as deliberate placeholders. All three projects are
 therefore `provisional: true` again, which is what that flag is for — the copy
 is real, the links are not, and `npm run content:status` says so until they are
 replaced.
+
+---
+
+## D-060 — The contact form's provider: Web3Forms, and what the page carries for it
+
+**Context:** the form has been built and unwired since D-054. Making it deliver
+to a real inbox needs a provider, and the choice has to survive the constraint
+D-054 set: **the destination address never appears in the page source.**
+
+**Web3Forms.** Free tier is 250 submissions a month against Formspree's 50, and
+it needs **no account** — you give it an address, it mails back a public access
+key. The key goes in the page and the address does not, which is exactly the
+property that was wanted. Formspree remains supported and documented as the
+alternative: its id is in the endpoint, so it carries nothing extra at all.
+
+Rejected: Netlify Forms (binds the form to a host that has not been chosen —
+Phase 8), and a Cloudflare Pages Function with an email API, which needs an API
+key, a verified domain and a runtime, for a form that receives a message a week.
+
+**What changed in the page.** `site.contact.fields` renders as hidden inputs,
+which is how a provider that needs an identifier gets one without any of this
+code knowing which provider it is. Both spellings of everything ship, because
+they cost two hidden inputs and remove a whole class of "why is the subject
+empty" — `subject`/`_subject`, and the `botcheck`/`_gotcha` honeypots, each
+ignored by the provider that does not use it.
+
+The honeypot is `display: none`, not `.visually-hidden`. A honeypot that is
+merely off-screen is filled in by exactly one kind of visitor: someone using a
+screen reader, whose message then gets thrown away as spam.
+
+**A 200 is not a yes.** Every provider in this class answers `200` with
+`{ success: false }` for a bad key or a tripped honeypot. The client checked
+`res.ok` alone, so it would have told someone their message was sent while the
+provider dropped it. It now reads the body's verdict when there is one, and
+keeps what was typed when the answer is no.
+
+**Verified against a mock provider on a real build** (a local endpoint pasted
+into `site.ts`, built, and served from `dist`): with JavaScript the post carries
+`access_key`, both subjects, an empty `_gotcha`, and the three real fields,
+the reader stays on the page and the fields clear; a `{ success: false }` reply
+reports a failure and keeps the message; with JavaScript off the native POST
+lands on the provider carrying the same fields, urlencoded. `dist/_headers` came
+out with `connect-src 'self' <origin>; form-action 'self' <origin>`.
+
+`tests/contact-form.spec.ts` keeps both paths honest by intercepting the
+endpoint's origin — the provider is never contacted and no quota is spent. With
+no endpoint set they skip, with a reason that says what to do.
+
+**Configured and delivering.** `endpoint` is `https://api.web3forms.com/submit`
+and `fields.access_key` holds the public key. Two real messages were sent
+through the built page and Web3Forms answered
+`{"success":true,"message":"Form submitted successfully!"}` to both.
+
+**Send exactly the fields the provider needs — it copies all of them into the
+email.** The first of those two messages proved it: Formspree's spellings were
+shipping alongside Web3Forms', so the mail arrived with a duplicated subject
+line and a blank `_gotcha` row. `_subject` and `_gotcha` are gone; `subject` and
+`botcheck` remain, and the second message came back carrying only subject, name,
+email and message. Switching provider means renaming those two, which the
+RUNBOOK says.
+
+The honeypot being a checkbox is what makes it free: an unchecked box is not
+submitted at all, so it never reaches the email. `tests/contact-form.spec.ts`
+asserts `botcheck` is absent from the payload rather than present-and-empty.
+
+---
+
+## D-061 — Off the clock: the easter egg is on the sun, not on a button
+
+**Context:** one small, deliberately non-professional thing on the site —
+gaming — hidden well enough that finding it feels like finding something.
+
+**It is on the drawn orb, not the theme control.** The first version put it on
+the header's sun/moon button, which was wrong for the reason a hidden thing is
+usually wrong: **a button is the first thing anyone presses.** The celestial
+object in the sky is the one element on the page that has never done anything,
+so it is the one place where "I wonder if that does something" is a real
+question. Click the sun, and a cloud forms under it on a thread.
+
+**The orb cannot be a button.** `.orb` is `pointer-events: none` at
+`z-index: -3` — behind every section on the page — because its glow must never
+paint over text. Putting a hit area over it would mean a fixed invisible disc
+in the top-right corner swallowing clicks meant for whatever scrolled under it.
+So the click is resolved **by geometry**: a document listener asks whether the
+point is inside the orb's circle, and bails if the click landed on anything
+interactive or on a selection. The page is untouched, nothing is blocked, and a
+link that happens to be under the sun still behaves like a link.
+`tests/off-the-clock.spec.ts` asserts both halves — the disc opens it, a point
+just outside the circle does not, and a nav link is still a nav link.
+
+**Nothing new was drawn.** The panel is the same cloud that carries text over
+the sky everywhere else, and the line from the sun to it is the same thread
+that arrives at Contact (D-051). One hairline controller sits at the foot of
+the panel in the stroke the sun's own rays are drawn in. There is no gaming
+visual language on this site and this did not add one.
+
+The cloud's mask is `.rm-cloud`'s nine lobes copied rather than shared, because
+that class carries a section heading's 38/44px padding and a -44px bleed, which
+on a 336px panel leaves no room for words. The invariant came with it: **the
+opaque core reaches 39% of the box from its centre, so the padding has to be
+about 10% a side or the last character of a row dissolves.** The first version
+had 26px on a 312px panel and did exactly that.
+
+**Space, not Enter, for the keyboard route.** The orb is decoration and cannot
+be focusable without announcing itself, so the theme control — the page's other
+sun and moon — opens the panel when Space is *held*. It has to be Space: a
+button fires its click on Enter **keydown**, so a held Enter would flip the
+theme the instant the key went down. Space fires on keyup, late enough for a
+capture-phase listener to swallow. That listener is on the document rather than
+in `ThemeToggle.astro`, which is untouched and does not know any of this exists.
+
+**It has to sit inside a landmark.** `position: fixed` makes its place in the
+document invisible, so it was outside `<main>` — and axe's `region` rule was
+right to call that orphaned page content. It is now the last thing in `<main>`.
+
+**It is in the contrast gate.** `ridge-contrast.spec.ts` opens it by clicking
+the orb before sampling, and now fails if the panel is never sampled — the one
+element on the page behind an interaction is the one most able to vanish from a
+gate unnoticed, which is the exact failure that file was written about twice.
+
+Content is `src/data/play.ts`, marked PROVISIONAL because every title in it is
+invented. Emptying an array removes its row; the panel lays out around what is
+missing.
+
+**Also fixed here:** `contact-form.ts` now marks the form `data-enhanced` when
+it binds. Its spec was clicking submit before the script had taken over about
+one run in six, which is a *native* POST — the browser leaves for the provider
+and every assertion is about a document that is no longer there. The test waits
+for the marker instead of racing it.
