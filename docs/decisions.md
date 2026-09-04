@@ -1896,3 +1896,38 @@ it binds. Its spec was clicking submit before the script had taken over about
 one run in six, which is a *native* POST — the browser leaves for the provider
 and every assertion is about a document that is no longer there. The test waits
 for the marker instead of racing it.
+
+---
+
+## D-062 — Off the clock is night only
+
+**Context:** D-061 put the easter egg behind the celestial object in either
+palette. It should only be there at night.
+
+**The reasoning is the content's.** The panel is about free time, and free time
+happens after work. By day the disc is the sun and clicking it does nothing at
+all — no hint, no disabled state, no "come back later". The page simply does
+not admit to having any free time while it is light out, which is a better joke
+than any message would have been.
+
+**The theme is the hour, not the clock.** D-003 already decided this: light runs
+first light to last light and dark runs dusk to before dawn, so the palette *is*
+what time it is on this site. Reading `Date` instead would mean a visitor in
+night mode at two in the afternoon finds nothing behind a moon — the page would
+be telling them it is night and behaving as though it were not. `night()` here
+resolves the same way `ThemeToggle` does: an explicit choice first, the
+visitor's system preference otherwise.
+
+**Daybreak closes it.** However the day arrives — the theme control, a tool
+setting the attribute, the system preference changing under the page — an open
+panel closes. A `MutationObserver` on `data-theme` and a `matchMedia` listener,
+which are the same two sources `ThemeToggle` already syncs from. Without this
+the one rule this thing has would only have applied at the instant it opened.
+
+**Consequences for the gates.** `ridge-contrast.spec.ts` opens the panel and
+asserts it was sampled — both are now inside `if (theme === 'dark')`, because
+in the light run there is nothing to open and a probe demanding to see it would
+fail for the right behaviour. Its axe check drops to the one theme for the same
+reason. `off-the-clock.spec.ts` gains the assertion that matters most here:
+clicking the sun by day leaves the panel not merely closed but **never opened**,
+and a panel opened at night closes when the day comes back.

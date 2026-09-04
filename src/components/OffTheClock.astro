@@ -2,10 +2,17 @@
 /**
  * Off the clock — the one thing on this site that is not about work (D-061).
  *
- * **Click the sun.** Or the moon; it is the same disc. Nothing announces it,
- * nothing is drawn around it, and the only way to find it is to wonder whether
- * the celestial object does anything. It does: a cloud forms under it on a
- * thread and tells you what is behind the work.
+ * **Click the moon.** Nothing announces it, nothing is drawn around it, and the
+ * only way to find it is to wonder whether the celestial object does anything.
+ * It does: a cloud forms under it on a thread and tells you what is behind the
+ * work.
+ *
+ * **Only at night.** By day the same disc is the sun and clicking it does
+ * nothing at all — free time happens after work, so the page only admits to
+ * having any once it is dark. The theme *is* the hour here (D-003: light runs
+ * first light to last light, dark runs dusk to before dawn), so this reads the
+ * theme rather than the clock; a visitor who switches to night has chosen to
+ * be there. Switching back to day closes it.
  *
  * It could not be a button. `.orb` is `pointer-events: none` at `z-index: -3`,
  * behind every section on the page — putting a hit area over it would mean a
@@ -260,6 +267,15 @@ const hours = (n: number): string => n.toLocaleString('en-US');
     let open = false;
     let opener: HTMLElement | null = null;
 
+    /** The site's own notion of the hour, resolved the way ThemeToggle does:
+        an explicit choice first, the visitor's preference otherwise. */
+    function night(): boolean {
+      const attr = document.documentElement.getAttribute('data-theme');
+      if (attr === 'dark') return true;
+      if (attr === 'light') return false;
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+
     /** The orb is a circle; its box is a square. */
     function onOrb(x: number, y: number): boolean {
       const r = orb!.getBoundingClientRect();
@@ -295,7 +311,7 @@ const hours = (n: number): string => n.toLocaleString('en-US');
     }
 
     function show(from: HTMLElement | null): void {
-      if (open) return;
+      if (open || !night()) return;
       open = true;
       opener = from;
       panel!.hidden = false;
@@ -389,5 +405,15 @@ const hours = (n: number): string => n.toLocaleString('en-US');
     // The orb's position is a clamp() of the viewport, so it moves when the
     // viewport does. Scrolling never moves it: the sky is fixed (D-027).
     window.addEventListener('resize', () => { if (open) place(); }, { passive: true });
+
+    /* Daybreak closes it, however the day arrives — the theme control, a tool
+       setting the attribute, or the visitor's system preference changing under
+       the page. Leaving it open in daylight would make the one rule this thing
+       has a rule that only applies at the moment it opens. */
+    const daybreak = (): void => { if (open && !night()) hide(); };
+    new MutationObserver(daybreak).observe(document.documentElement, {
+      attributeFilter: ['data-theme'],
+    });
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', daybreak);
   }
 </script>

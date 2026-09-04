@@ -188,13 +188,18 @@ for (const theme of THEMES) {
     /* Open the easter egg (D-061), which is otherwise never on the page. It is
        reached by clicking the orb, and the orb is behind every section, so the
        click is resolved by geometry — which means clicking its centre is the
-       real interaction and not a shortcut around one. */
-    const orb = await page.evaluate(() => {
-      const r = document.querySelector('[data-orb]')!.getBoundingClientRect();
-      return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
-    });
-    await page.mouse.click(orb.x, orb.y);
-    await expect(page.locator('[data-oc]')).toBeVisible();
+       real interaction and not a shortcut around one.
+
+       Night only (D-062): by day there is nothing behind the sun, so there is
+       nothing here to measure and the assertion below is not made. */
+    if (theme === 'dark') {
+      const orb = await page.evaluate(() => {
+        const r = document.querySelector('[data-orb]')!.getBoundingClientRect();
+        return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+      });
+      await page.mouse.click(orb.x, orb.y);
+      await expect(page.locator('[data-oc]')).toBeVisible();
+    }
 
     const failures: string[] = [];
     let sampled = 0;
@@ -233,7 +238,9 @@ for (const theme of THEMES) {
     // A gate that silently stops seeing something is the failure this file was
     // written about twice over. The egg is the one element here behind an
     // interaction, so it is the one most able to disappear unnoticed.
-    expect(sampledEgg, 'the easter egg panel was never sampled').toBeGreaterThan(0);
+    if (theme === 'dark') {
+      expect(sampledEgg, 'the easter egg panel was never sampled').toBeGreaterThan(0);
+    }
     expect(failures, failures.join('\n')).toEqual([]);
   });
 }
