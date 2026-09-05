@@ -1,5 +1,7 @@
 # The Hours
 
+**Live: <https://my-portfolio.iamabhishekverma.workers.dev>**
+
 Personal portfolio for Abhishek Verma. A static site whose organising idea is
 the passage of time: the sky is the page's ground, and the theme chooses which
 hours you are visiting — light runs first light to last light, dark runs dusk
@@ -39,15 +41,23 @@ First run of the tests needs a browser: `npm run test:install`.
 | Path | What |
 |---|---|
 | `src/styles/tokens.css` | **Every colour in the project**, including the four hour stops per theme. Retuning the whole day happens here and nowhere else. |
-| `src/scripts/hours.ts` | Maps scroll position onto the arc of a day |
+| `src/scripts/` | Ten small behaviours, all additive — remove them and the site still reads and navigates |
 | `src/illustration/` | Every asset, as inline SVG that inherits tokens |
 | `docs/` | The full design record — brief, research, concepts, decisions |
 | `docs/07-master-spec.md` | The specification this was built from |
 
 ## Status
 
-Phase 1 of 8 complete. The home page is a checkpoint build: its job is to give
-the sky a full scroll range with text on it, so contrast could be proven before
-anything was built on top. The seven real sections arrive in Phase 2.
+Built and deployed. The page runs hero → projects → skills → experience →
+contact, all of it on bare sky. Twenty-eight tests cover accessibility,
+contrast across the scroll range in both themes, the first screen across ten
+viewports, keyboard order, and the no-JavaScript path.
 
-See `docs/06-architecture.md` §10 for the phase plan.
+Deployed to Cloudflare Workers as static assets, built from `main` on every
+push. `wrangler.jsonc` holds the deploy configuration and `public/_headers`
+ships the Content-Security-Policy. See `RUNBOOK.md` § Deploy.
+
+Still open: a custom domain, and Lighthouse budgets in CI.
+
+There is one thing on the site that has nothing to do with work. It only
+exists after dark.
