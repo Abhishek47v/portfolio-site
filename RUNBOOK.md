@@ -15,6 +15,47 @@ Operational notes. Update the dates when something is re-verified.
 If `npm ci` fails after a long gap, that is the expected failure mode (D-019).
 Start by matching the Node version above, then bump Astro one major at a time.
 
+## The lockfile is cross-platform, and `npm install` on a Mac can break it
+
+`npm install` on darwin/arm64 pruned two Linux-only optional entries
+(`@emnapi/core`, `@emnapi/wasi-threads` — peer dependencies of
+`@napi-rs/wasm-runtime`, which arrived with wrangler). Everything passed
+locally: `npm run verify` never runs `npm ci`, and on a Mac the lockfile was
+complete. Every Linux `npm ci` then failed identically:
+
+```
+npm error `npm ci` can only install packages when your package.json and
+npm error package-lock.json are in sync.
+npm error Missing: @emnapi/wasi-threads@1.2.3 from lock file
+```
+
+GitHub Actions and the Cloudflare builder both failed; nothing local did.
+
+**The fix is a full regeneration**, not another `npm install`:
+
+```bash
+rm -rf node_modules package-lock.json && npm install
+```
+
+That restores the entries for every platform. Confirm before pushing:
+
+```bash
+node -e "const p=require('./package-lock.json').packages; \
+  for (const n of ['node_modules/@emnapi/core','node_modules/@emnapi/wasi-threads']) \
+    console.log(n in p ? 'ok '+n : 'MISSING '+n)"
+```
+
+**There is no local gate for this, deliberately.** `npm ci --dry-run` diffs
+against the installed `node_modules` rather than judging the lockfile alone, so
+it reports "added 143 packages" for a *correct* lockfile and exits `0` for a
+broken one — a gate that cannot fail. CI is the real check and it works: the
+`npm ci` step goes red in about 20 seconds. **After pushing a dependency
+change, look at the CI run before assuming it is fine.**
+
+Cloudflare's build image pins **npm 10.9.2** with no override variable
+(`NODE_VERSION` exists, an npm equivalent does not), so the lockfile has to
+satisfy an npm older than whatever ships with the Node in `.nvmrc`.
+
 ## Commands
 
 ```bash
