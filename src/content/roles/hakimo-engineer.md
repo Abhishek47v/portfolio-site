@@ -8,7 +8,7 @@ highlights:
   - Ship features end to end, from data model through API to the interface people use daily.
   - Work on the parts of the system that run unattended, where failures surface hours after the cause.
   - Take changes through review, staging and release, and stay with them once they are live.
-stack: [TypeScript, Python, React, Node.js, PostgreSQL, Git]
+stack: [TypeScript, JavaScript, Python, Flask, React, Tailwind, WebSockets, REST, Redis, AWS, S3, Git, Bash]
 order: 1
 provisional: false
 ---

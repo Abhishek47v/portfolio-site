@@ -53,7 +53,7 @@ const roles = defineCollection({
     end: z.string().nullable().default(null),
     oneLine: words(10, 20),
     highlights: z.array(words(12, 24)).min(2).max(4),
-    stack: z.array(z.string()).min(3).max(8),
+    stack: z.array(z.string()).min(3).max(14),
     order: z.number().int().default(99),
     provisional: z.boolean().default(false),
   }),
