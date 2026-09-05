@@ -1,6 +1,6 @@
 /**
- * Identity and links. Change a value and nothing else in the codebase needs
- * to change.
+ * Identity and links. Everything here is real; change a value and nothing
+ * else in the codebase needs to change.
  */
 export const site = {
   name: 'Abhishek Verma',
