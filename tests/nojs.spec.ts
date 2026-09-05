@@ -1,7 +1,7 @@
 /**
  * Content, navigation and links must work with JavaScript off.
  * What is lost is the sky interpolation, the theme toggle and audio — the site
- * falls back to a static sky and the OS colour preference (05-technical.md §1).
+ * falls back to a static sky and the OS colour preference.
  */
 import { test, expect } from '@playwright/test';
 

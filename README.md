@@ -43,8 +43,9 @@ First run of the tests needs a browser: `npm run test:install`.
 | `src/styles/tokens.css` | **Every colour in the project**, including the four hour stops per theme. Retuning the whole day happens here and nowhere else. |
 | `src/scripts/` | Ten small behaviours, all additive — remove them and the site still reads and navigates |
 | `src/illustration/` | Every asset, as inline SVG that inherits tokens |
-| `docs/` | The full design record — brief, research, concepts, decisions |
-| `docs/07-master-spec.md` | The specification this was built from |
+| `docs/decisions.md` | Why every non-obvious choice was made, and what was rejected. The most useful file here. |
+| `docs/06-architecture.md` | File layout, boundaries, and the phases it was built in |
+| `RUNBOOK.md` | How to run it, regenerate the fonts, and deploy it |
 
 ## Status
 

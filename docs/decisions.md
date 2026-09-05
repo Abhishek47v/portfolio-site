@@ -295,7 +295,7 @@ the headers protect what remains.
 
 **Chosen:** `.nvmrc` pinning Node (same version in CI) · committed lockfile,
 `npm ci` only · a **monthly scheduled CI build** on an untouched repository ·
-`docs/RUNBOOK.md` recording exact commands and last-known-good versions with a
+`RUNBOOK.md` recording exact commands and last-known-good versions with a
 date.
 **Reason:** the realistic failure mode for this project is not traffic or
 performance — it is that after eighteen months of neglect the build no longer
@@ -780,8 +780,8 @@ easily as an effect. Typing is legible as an intention.
 
 ## D-038 — Now is removed; About anchors the hero; Experience precedes Work
 
-**Supersedes the ordering rationale in `04-experience.md` §2 and the Now section
-in the content model.**
+**Supersedes the ordering rationale in the experience spec §2 and the Now
+section in the content model.**
 
 **Chosen:** the Now section is deleted, along with `src/data/now.ts`. The nav
 gains **About**, pointing at the hero. Experience now comes before Work.
@@ -841,11 +841,16 @@ sky at the owner's direction, which made a ridge-aware gate mandatory rather
 than optional — `tests/ridge-contrast.spec.ts` now asks the ridge paths
 directly instead of modelling them.
 
-**Numbers are placeholders, and marked.** `src/data/stats.ts` carries
-`PROVISIONAL`, so `npm run content:status` lists it and the file blocks going
-public alongside the other invented copy. Numbers are the most damaging kind of
-placeholder: filler prose reads as filler, but a precise-looking figure reads as
-a claim.
+**Numbers started as placeholders, and were marked as such** — `src/data/stats.ts`
+carried `PROVISIONAL` and `npm run content:status` listed it, because numbers are
+the most damaging kind of placeholder: filler prose reads as filler, but a
+precise-looking figure reads as a claim.
+
+**Superseded 2026-09-05.** All five were reviewed and confirmed by the owner
+before the repository went public, one of them corrected in the process
+(*Systems shipped* 12 → 11). The marker is gone and `content:status` now reports
+`all real`. The rule the marker existed to enforce is kept as a standing note in
+the file itself.
 
 ## D-040 — Headings are set open, not tight
 
@@ -1681,10 +1686,13 @@ with the résumé's own description of the three projects.
 on the LeetCode mark, all three résumé controls and the LeetCode and Résumé
 rows in Contact — `lib/assets § hasLink` was already gating every one of them,
 so nothing needed wiring. The three projects carry the résumé's own text,
-trimmed to the schema's word budgets. `year` and `role` on each are still an
-earlier pass's guesses and remain unverified. QuipWire stays `provisional`
-because its stack was invented and the résumé does not name one; the other two
-name theirs (MERN, and React/SQL/Java) and are now real content.
+trimmed to the schema's word budgets. `year` and `role` on each began as an
+earlier pass's guesses; QuipWire was held `provisional` because its stack was
+invented and the résumé does not name one, while the other two name theirs
+(MERN, and React/SQL/Java).
+
+**Confirmed 2026-09-05.** The owner reviewed every `year`, `role` and stack and
+confirmed them as written, which is what cleared the last `provisional` flag.
 
 Every project's `links` block is gone. They pointed at `example.com/demo` and
 at the GitHub profile rather than a repository, and the section renders them as
@@ -1888,9 +1896,10 @@ the orb before sampling, and now fails if the panel is never sampled — the one
 element on the page behind an interaction is the one most able to vanish from a
 gate unnoticed, which is the exact failure that file was written about twice.
 
-Content is `src/data/play.ts`, marked PROVISIONAL because every title in it is
-invented. Emptying an array removes its row; the panel lays out around what is
-missing.
+Content is `src/data/play.ts`, initially marked PROVISIONAL because the titles
+were invented and **confirmed by the owner on 2026-09-05**. Emptying an array
+removes its row; the panel lays out around what is missing. This is the one part
+of the site that dates, because it says what is installed *now*.
 
 **Also fixed here:** `contact-form.ts` now marks the form `data-enhanced` when
 it binds. Its spec was clicking submit before the script had taken over about
