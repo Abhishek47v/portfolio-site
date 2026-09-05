@@ -984,9 +984,9 @@ measures, so the token can never drift from the layout again.
 **Documented limit:** 320x568 and smaller are not covered and do not fit. With a
 103px header that leaves 465px for a portrait, a name, a role line, a paragraph,
 two buttons and five statistics. `min-height` means those viewports scroll
-rather than clip, which is the correct failure. Note also that the intro copy is
-still `PROVISIONAL` — it is the tallest element above the fold, so the real copy
-changes this budget in whichever direction it is written.
+rather than clip, which is the correct failure. Note also that the intro is the
+tallest element above the fold, so its length moves this budget in whichever
+direction it is written.
 
 ## D-046 — Experience is a roadmap on clouds, outside the sheet
 

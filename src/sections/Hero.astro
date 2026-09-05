@@ -166,8 +166,8 @@ const widest = Math.max(...site.roles.map((r) => r.length));
        up some size: at --step-1 it ran to three however wide the box got, and
        the box is already at the limit of --wrap. ~110 characters a line is
        well past the 65-75 that reads comfortably, so this is a composition
-       decision paid for in readability. Shorter real copy is the proper fix —
-       this text is still PROVISIONAL (D-045). */
+       decision paid for in readability. Shorter copy is the proper fix, and
+       this is the tallest element above the fold — see D-045 for the budget. */
     font-size: clamp(1rem, .92rem + .28vw, 1.12rem);
     line-height: 1.62;
     color: var(--ink-soft);
